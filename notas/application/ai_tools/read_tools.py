@@ -288,23 +288,25 @@ def list_available_dailyplans_tool(user):
     )
 
 
-def _search_dailyplans_data(user, query: str) -> dict:
+def _search_dailyplans_data(user, query: str, limit: int | None = None) -> dict:
     return {
         "dailyplans": _serialize_dto_list(
             search_dailyplans(
                 user,
                 query,
+                limit=limit,
             ),
         ),
         "query": query,
     }
 
 
-def search_dailyplans_tool(user, query: str):
+def search_dailyplans_tool(user, query: str, limit: int | None = None):
     return run_ai_tool(
         _search_dailyplans_data,
         user,
         query,
+        limit,
         user=user,
     )
 

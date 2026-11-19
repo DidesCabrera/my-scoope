@@ -31,6 +31,7 @@ from myscoope_mcp.tools import (
     TOOL_READ_FOOD,
     TOOL_READ_MEAL,
     TOOL_READ_PROPOSAL,
+    TOOL_SEARCH_USER_DAILYPLANS,
     TOOL_SEARCH_USER_MEALS,
 )
 from starlette.applications import Starlette
@@ -52,6 +53,7 @@ class MCPProtocolServerTests(unittest.TestCase):
                 TOOL_READ_MEAL,
                 TOOL_READ_PROPOSAL,
                 TOOL_SEARCH_USER_MEALS,
+                TOOL_SEARCH_USER_DAILYPLANS,
                 TOOL_LIST_USER_PROPOSALS,
                 TOOL_LIST_FOOD_CATALOG,
                 TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
@@ -182,6 +184,42 @@ class MCPProtocolServerTests(unittest.TestCase):
         server = create_mcp_server()
         tools = asyncio.run(server.list_tools())
         self.assertEqual({tool.name for tool in tools}, {"list_food_catalog", "read_proposal"})
+
+    @patch.dict(
+        "os.environ",
+        {"MYSCOOPE_MCP_ALLOWED_TOOLS": (
+            "list_food_catalog,read_food,search_user_meals,read_meal,"
+            "search_user_dailyplans,read_dailyplan,"
+            "create_nutrition_engine_dailyplan_proposal"
+        )},
+        clear=True,
+    )
+    def test_public_v1_subset_exposes_six_reads_and_reviewable_creation(self):
+        tools = asyncio.run(create_mcp_server().list_tools())
+        self.assertEqual(
+            {tool.name for tool in tools},
+            {
+                TOOL_LIST_FOOD_CATALOG,
+                TOOL_READ_FOOD,
+                TOOL_SEARCH_USER_MEALS,
+                TOOL_READ_MEAL,
+                TOOL_SEARCH_USER_DAILYPLANS,
+                TOOL_READ_DAILYPLAN,
+                TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+            },
+        )
+        by_name = {tool.name: tool for tool in tools}
+        self.assertTrue(all(
+            tool.annotations.readOnlyHint
+            for tool in tools
+            if tool.name != TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL
+        ))
+        proposal = by_name[TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL]
+        self.assertFalse(proposal.annotations.readOnlyHint)
+        self.assertEqual(
+            proposal.securitySchemes,
+            [{"type": "oauth2", "scopes": ["myscoope:read", "myscoope:proposals:create"]}],
+        )
 
     def test_tools_declare_read_and_create_oauth_scopes(self):
         tools = {tool.name: tool for tool in asyncio.run(create_mcp_server().list_tools())}
@@ -321,6 +359,7 @@ class MCPProtocolServerTests(unittest.TestCase):
             TOOL_READ_MEAL,
             TOOL_READ_PROPOSAL,
             TOOL_SEARCH_USER_MEALS,
+            TOOL_SEARCH_USER_DAILYPLANS,
             TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
         ]:
             self.assertTrue(

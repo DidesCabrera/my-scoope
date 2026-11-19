@@ -71,6 +71,16 @@ class PublicLegalPagesTests(TestCase):
         self.assertContains(response, 'href="/refund-policy/"')
         self.assertNotContains(response, "Funciones premium futuras")
 
+    def test_mcp_listing_page_is_public_and_describes_reviewable_proposals(self):
+        response = self.client.get(reverse("mcp_integration"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "My Scoope SpA")
+        self.assertContains(response, "Las propuestas quedan pendientes")
+        self.assertContains(response, "acceso PRO")
+        self.assertContains(response, 'href="/privacy/"')
+        self.assertContains(response, 'href="/terms/"')
+
     def test_public_commercial_pages_do_not_present_retired_payment_channels(self):
         for route_name in ("landing", "terms", "privacy", "refund_policy", "support"):
             response = self.client.get(reverse(route_name))

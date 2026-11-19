@@ -222,6 +222,16 @@ READ_TOOL_SPECS = {
         risk_level=AssistantToolRiskLevel.LOW,
         requires_human_review=False,
         allowed_intents=("read_context", "answer_question", "create_dailyplan_proposal", "iterate_proposal"),
+        mcp_exposed=True,
+        mcp_api_path="/ai-tools/search-user-dailyplans/",
+        mcp_input_schema={
+            "type": "object",
+            "required": ["query"],
+            "properties": {
+                "query": {"type": "string", "description": "DailyPlan name or partial name.", "minLength": 1, "maxLength": 80},
+                "limit": {"type": "integer", "description": "Optional maximum result count, 1 to 10.", "minimum": 1, "maximum": 10},
+            },
+        },
         input_schema={
             "type": "object",
             "required": ["query"],

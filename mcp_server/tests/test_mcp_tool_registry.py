@@ -1,26 +1,27 @@
 import unittest
 
-from ai_assistant.application.tools.registry import list_mcp_tool_specs
-
 from myscoope_mcp.tools import (
     FORBIDDEN_TOOL_NAMES,
     TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
-    TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
-    TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
-    TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
     TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
+    TOOL_CREATE_VALIDATED_DAILYPLAN_BUILD_PROPOSAL,
+    TOOL_CREATE_VALIDATED_DAILYPLAN_PROPOSAL,
+    TOOL_CREATE_VALIDATED_MEAL_PROPOSAL,
     TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL,
-    TOOL_LIST_USER_PROPOSALS,
     TOOL_LIST_FOOD_CATALOG,
+    TOOL_LIST_USER_PROPOSALS,
     TOOL_READ_DAILYPLAN,
     TOOL_READ_FOOD,
     TOOL_READ_MEAL,
     TOOL_READ_PROPOSAL,
+    TOOL_SEARCH_USER_DAILYPLANS,
     TOOL_SEARCH_USER_MEALS,
     get_tool_spec,
     is_forbidden_tool_name,
     list_allowed_tool_specs,
 )
+
+from ai_assistant.application.tools.registry import list_mcp_tool_specs
 
 
 class MCPToolRegistryTests(unittest.TestCase):
@@ -52,6 +53,7 @@ class MCPToolRegistryTests(unittest.TestCase):
                 TOOL_READ_MEAL,
                 TOOL_READ_PROPOSAL,
                 TOOL_SEARCH_USER_MEALS,
+                TOOL_SEARCH_USER_DAILYPLANS,
                 TOOL_LIST_USER_PROPOSALS,
                 TOOL_LIST_FOOD_CATALOG,
                 TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
@@ -70,6 +72,7 @@ class MCPToolRegistryTests(unittest.TestCase):
             TOOL_READ_MEAL: "/ai-tools/read-meal/",
             TOOL_READ_PROPOSAL: "/ai-tools/read-proposal/",
             TOOL_SEARCH_USER_MEALS: "/ai-tools/search-user-meals/",
+            TOOL_SEARCH_USER_DAILYPLANS: "/ai-tools/search-user-dailyplans/",
             TOOL_LIST_USER_PROPOSALS: "/ai-tools/list-user-proposals/",
             TOOL_LIST_FOOD_CATALOG: "/ai-tools/list-food-catalog/",
             TOOL_COMPARE_DAILYPLAN_TO_TARGETS: "/ai-tools/compare-dailyplan-to-targets/",

@@ -76,3 +76,7 @@ def terms(request):
 
 def support(request):
     return render(request, "core/support.html", _legal_page_context(request))
+
+
+def mcp_integration(request):
+    return render(request, "core/mcp_integration.html", _legal_page_context(request))

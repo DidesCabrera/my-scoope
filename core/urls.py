@@ -5,6 +5,7 @@ from .views import (
     apple_app_site_association,
     healthz,
     landing,
+    mcp_integration,
     meal_app_link,
     privacy,
     refund_policy,
@@ -26,4 +27,5 @@ urlpatterns = [
     path("refund-policy/", refund_policy, name="refund_policy"),
     path("terms/", terms, name="terms"),
     path("support/", support, name="support"),
+    path("integrations/mcp/", mcp_integration, name="mcp_integration"),
 ]

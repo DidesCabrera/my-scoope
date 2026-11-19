@@ -35,6 +35,7 @@ from myscoope_mcp.tools import (
     TOOL_READ_FOOD,
     TOOL_READ_MEAL,
     TOOL_READ_PROPOSAL,
+    TOOL_SEARCH_USER_DAILYPLANS,
     TOOL_SEARCH_USER_MEALS,
 )
 
@@ -98,6 +99,7 @@ def get_protocol_tool_annotations() -> dict[str, ToolAnnotations]:
         TOOL_READ_FOOD: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_READ_MEAL: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_SEARCH_USER_MEALS: READ_ONLY_TOOL_ANNOTATIONS,
+        TOOL_SEARCH_USER_DAILYPLANS: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_READ_PROPOSAL: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_COMPARE_DAILYPLAN_TO_TARGETS: READ_ONLY_TOOL_ANNOTATIONS,
         TOOL_CREATE_VALIDATED_MEAL_PROPOSAL: PROPOSAL_CREATE_TOOL_ANNOTATIONS,
@@ -543,6 +545,22 @@ def register_entity_read_tools(
         )
         return serialize_tool_result(result)
 
+    @server.tool(
+        annotations=annotations[TOOL_SEARCH_USER_DAILYPLANS],
+    )
+    def search_user_dailyplans(
+        query: Annotated[str, Field(min_length=1, max_length=80)],
+        limit: Annotated[int, Field(ge=1, le=10)] = 10,
+    ) -> dict[str, Any]:
+        """Find up to ten readable DailyPlans by name. Ask when several match."""
+        client = create_api_client()
+        result = dispatch_tool_call(
+            client=client,
+            tool_name=TOOL_SEARCH_USER_DAILYPLANS,
+            arguments={"query": query, "limit": limit},
+        )
+        return serialize_tool_result(result)
+
 
 def register_meal_tools(
     server: FastMCP,
@@ -588,6 +606,7 @@ def get_protocol_allowed_tool_names() -> set[str]:
         TOOL_READ_FOOD,
         TOOL_READ_MEAL,
         TOOL_SEARCH_USER_MEALS,
+        TOOL_SEARCH_USER_DAILYPLANS,
         TOOL_READ_PROPOSAL,
         TOOL_LIST_USER_PROPOSALS,
         TOOL_LIST_FOOD_CATALOG,
