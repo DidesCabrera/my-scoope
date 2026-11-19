@@ -55,7 +55,7 @@ MYSCOOPE_MCP_ALLOWED_TOOLS=list_food_catalog,read_food,search_user_meals,read_me
 | 1. Fijar v1 | Cerrado: seis lecturas, tres entidades y creación de propuesta revisable, con allowlist exacta de siete tools. | Mantener el contrato público en la siguiente versión. |
 | 2. Robustecer el producto | Código integrado mediante PR #155; gate `full` de la PR aprobado, servicios Django y MCP de producción en el merge `f9d46e112c2aadfef00c2e02f288c1845f6874f6` y perfil de siete tools configurado. Página pública de la integración disponible. | Cuenta demo PRO, datos reproducibles y revisión final de privacidad. |
 | 3. Validar el recorrido | Parcial: OAuth público anuncia ambos scopes, el backend ya reconoce el recurso MCP, el servidor exige token y la página pública responde. El escaneo del portal se detiene porque la cuenta conectada no tiene PRO. | Reconectar una cuenta de prueba PRO, descubrir las siete tools, ejecutar búsqueda → ficha → propuesta y los casos de permisos. |
-| 4. Presentar a OpenAI | El plugin existente está `Not published` y `Review status Unavailable`; todavía no se ha enviado esta versión. La organización está verificada como individuo, pero la verificación empresarial de My Scoope SpA no ha comenzado. | Completar identidad empresarial, cuenta de revisor, video real, países, ejecución de casos, ZIP definitivo y envío a revisión. |
+| 4. Presentar a OpenAI | El plugin existente está `Not published` y `Review status Unavailable`; todavía no se ha enviado esta versión. La verificación individual está aprobada y Felipe inició la verificación empresarial de My Scoope SpA; Persona muestra «Application in review» el 19-11-2026. | Esperar aprobación empresarial, preparar cuenta de revisor, video real, países, ejecución de casos, ZIP definitivo y envío a revisión. |
 
 En la cuenta de correo personal hay confirmación de recepción de una postulación
 «My Scoope» del 13-05-2026 y un caso de soporte por verificación (08802667).
@@ -93,9 +93,10 @@ ejecutados** en un cliente externo para esta versión.
    propuesta, visibilidad, revocación y permisos. La URL pública de la ficha es
    <https://www.myscoope.com/integrations/mcp/>; sitio, soporte, privacidad y
    términos responden públicamente.
-3. Completar en OpenAI la verificación empresarial para publicar bajo My Scoope
-   SpA. Actualmente solo aparece aprobada la verificación individual de Felipe
-   Dides. La identidad pública no se puede atribuir a la empresa hasta verificarla.
+3. Esperar la decisión de la verificación empresarial iniciada en OpenAI para
+   publicar bajo My Scoope SpA. La pantalla de Persona muestra la solicitud en
+   revisión; todavía no acredita aprobación empresarial. La identidad pública
+   no se puede atribuir a la empresa hasta verificarla.
 4. Grabar y alojar una demostración real del recorrido, confirmar países y
    declaración comercial, ejecutar cinco casos positivos y tres negativos,
    finalizar el ZIP y enviarlo a revisión. El borrador local de paquete tiene
