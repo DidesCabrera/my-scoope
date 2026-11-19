@@ -7,6 +7,7 @@ from myscoope_mcp.tool_handlers import (
     read_dailyplan,
     read_meal,
     read_proposal,
+    search_user_dailyplans,
     search_user_meals,
 )
 from myscoope_mcp.tools import (
@@ -14,6 +15,7 @@ from myscoope_mcp.tools import (
     TOOL_READ_DAILYPLAN,
     TOOL_READ_MEAL,
     TOOL_READ_PROPOSAL,
+    TOOL_SEARCH_USER_DAILYPLANS,
     TOOL_SEARCH_USER_MEALS,
 )
 
@@ -110,6 +112,20 @@ class MCPReadToolHandlerTests(unittest.TestCase):
 
     def test_search_user_meals_requires_query_before_api_call(self):
         result = call_read_tool(self.client, TOOL_SEARCH_USER_MEALS, {})
+        self.assertFalse(result.ok)
+        self.assertEqual(result.error["code"], "missing_required_argument:query")
+        self.assertEqual(self.client.calls, [])
+
+    def test_search_user_dailyplans_uses_authorized_api_adapter(self):
+        result = search_user_dailyplans(self.client, query="lunes", limit=3)
+        self.assertTrue(result.ok)
+        self.assertEqual(self.client.calls, [{
+            "api_path": "/ai-tools/search-user-dailyplans/",
+            "payload": {"query": "lunes", "limit": 3},
+        }])
+
+    def test_search_user_dailyplans_requires_query_before_api_call(self):
+        result = call_read_tool(self.client, TOOL_SEARCH_USER_DAILYPLANS, {})
         self.assertFalse(result.ok)
         self.assertEqual(result.error["code"], "missing_required_argument:query")
         self.assertEqual(self.client.calls, [])

@@ -191,6 +191,10 @@ class AIToolsAPIReadEndpointTests(TestCase):
                 {"query": "Meal"},
             ),
             (
+                "ai_tools_search_user_dailyplans",
+                {"query": "Day"},
+            ),
+            (
                 "ai_tools_read_dailyplan",
                 {
                     "dailyplan_id": self.dailyplan.id,
@@ -280,6 +284,40 @@ class AIToolsAPIReadEndpointTests(TestCase):
             ({"query": "Meal", "limit": 11}, "invalid_meal_limit"),
         ]:
             response = json_post(self.client, "ai_tools_search_user_meals", payload)
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.json()["error"]["code"], code)
+
+    def test_search_user_dailyplans_is_bounded_and_hides_other_users_private_plans(self):
+        self.client.force_login(self.user)
+        DailyPlan.objects.create(
+            name="Training Day Two",
+            created_by=self.user,
+            is_public=False,
+            is_draft=False,
+        )
+        response = json_post(self.client, "ai_tools_search_user_dailyplans", {
+            "query": "Day", "limit": 1,
+        })
+        data = self.assert_success_response(response)
+        self.assertEqual(
+            [plan["id"] for plan in data["data"]["dailyplans"]],
+            [self.dailyplan.id],
+        )
+        private_search = json_post(self.client, "ai_tools_search_user_dailyplans", {
+            "query": "Private Other DailyPlan",
+        })
+        self.assertEqual(
+            self.assert_success_response(private_search)["data"]["dailyplans"],
+            [],
+        )
+
+    def test_search_user_dailyplans_rejects_empty_query_and_unbounded_limit(self):
+        self.client.force_login(self.user)
+        for payload, code in [
+            ({"query": "   "}, "invalid_dailyplan_query"),
+            ({"query": "Day", "limit": 11}, "invalid_dailyplan_limit"),
+        ]:
+            response = json_post(self.client, "ai_tools_search_user_dailyplans", payload)
             self.assertEqual(response.status_code, 400)
             self.assertEqual(response.json()["error"]["code"], code)
 

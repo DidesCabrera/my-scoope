@@ -20,6 +20,7 @@ from ai_assistant.application.tools.registry import (
     TOOL_READ_FOOD,
     TOOL_READ_MEAL,
     TOOL_READ_PROPOSAL,
+    TOOL_SEARCH_USER_DAILYPLANS,
     TOOL_SEARCH_USER_MEALS,
     normalize_tool_name,
 )

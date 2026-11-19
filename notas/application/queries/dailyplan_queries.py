@@ -239,7 +239,7 @@ def list_available_dailyplans(user) -> list[DailyPlanListItemDTO]:
     ]
 
 
-def search_dailyplans(user, query: str) -> list[DailyPlanListItemDTO]:
+def search_dailyplans(user, query: str, limit: int | None = None) -> list[DailyPlanListItemDTO]:
     clean_query = (query or "").strip()
 
     dailyplans = get_available_dailyplan_queryset(user)
@@ -250,6 +250,8 @@ def search_dailyplans(user, query: str) -> list[DailyPlanListItemDTO]:
         )
 
     dailyplans = dailyplans.prefetch_related("dailyplan_meals__meal")
+    if limit is not None:
+        dailyplans = dailyplans[:limit]
 
     return [
         build_dailyplan_list_item_dto(dailyplan, user)
