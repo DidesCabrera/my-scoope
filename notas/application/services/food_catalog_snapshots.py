@@ -1,9 +1,8 @@
 """Internal snapshot protocol from Food Catalog to ``notas.Food``.
 
-This module is the only application bridge that may read ``food_catalog`` in
-order to materialize published catalog data into the operational food model.
-It does not expose Food Catalog to MCP and it does not make ``CatalogFood`` an
-operational nutrition source.
+This module is the application bridge that reads ``food_catalog`` to materialize
+published catalog data and resolve approved visual digests for operational
+foods. It does not expose Food Catalog to MCP or use it as a nutrition source.
 """
 
 from __future__ import annotations
@@ -28,7 +27,7 @@ from food_catalog.application.contracts import (
     PublishedFoodSnapshot,
 )
 from food_catalog.application.solver_readiness import build_catalog_solver_profile
-from food_catalog.models import CatalogFood
+from food_catalog.models import CatalogFood, FoodVisualAsset
 from notas.application.services.food_imports.aliases import (
     FoodAliasInput,
     ensure_food_aliases,
@@ -36,6 +35,17 @@ from notas.application.services.food_imports.aliases import (
 from notas.domain.models import Food, FoodPortion
 
 FOOD_CATALOG_PORTION_SOURCE = "food_catalog"
+
+
+def published_catalog_food_visual_digests(refs) -> tuple[set, dict]:
+    """Return published catalog references and their approved image digests."""
+    published_refs = set(CatalogFood.objects.filter(
+        catalog_ref__in=refs, status=CatalogFood.STATUS_PUBLISHED,
+    ).values_list("catalog_ref", flat=True))
+    digests = dict(FoodVisualAsset.objects.filter(
+        food__catalog_ref__in=published_refs, is_published=True,
+    ).exclude(mobile_image_data=b"").values_list("food__catalog_ref", "content_sha256"))
+    return published_refs, digests
 
 
 class FoodCatalogSnapshotError(ValueError):
@@ -467,6 +477,7 @@ __all__ = [
     "create_operational_food_snapshot_from_catalog",
     "get_catalog_food_refs_by_id",
     "mark_operational_food_catalog_snapshot_stale",
+    "published_catalog_food_visual_digests",
     "refresh_operational_food_snapshot_from_catalog",
 ]
 """Explicit bridge from approved catalog preparations to operational copies."""

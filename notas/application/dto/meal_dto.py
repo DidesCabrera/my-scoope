@@ -38,9 +38,13 @@ class MealFoodDTO:
     quantity_unit: str = "g"
     ppk: float | None = None
     emoji: str = ""
+    image_path: str | None = None
 
     def as_dict(self) -> dict:
-        return asdict(self)
+        data = asdict(self)
+        if data["image_path"] is None:
+            del data["image_path"]
+        return data
 
 
 @dataclass(frozen=True)

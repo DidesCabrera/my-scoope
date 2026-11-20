@@ -82,7 +82,9 @@ class UISystemGalleryTests(TestCase):
                 filename = "entity_card_v2.html" if entity == "dailyplan" else "entity_card_v1.html"
                 entity_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui" / filename
                 self.assertEqual(candidate.status_code, 200)
-                expected = entity_path.read_text(encoding="utf-8")
+                expected = entity_path.read_text(encoding="utf-8").replace(
+                    '"__MYSCOOPE_IMAGE_ORIGIN__"', '"https://www.myscoope.com"'
+                )
                 if entity == "dailyplan":
                     expected = expected.replace(
                         '"__MYSCOOPE_APP_BASE_URL__"',

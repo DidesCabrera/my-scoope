@@ -48,13 +48,18 @@ class DailyPlanFoodAggregationDTO:
     food_id: int
     food_name: str
     quantity: float
+    quantity_unit: str
     protein: float
     carbs: float
     fat: float
     total_kcal: float
+    image_path: str | None = None
 
     def as_dict(self) -> dict:
-        return asdict(self)
+        data = asdict(self)
+        if data["image_path"] is None:
+            del data["image_path"]
+        return data
 
 
 @dataclass(frozen=True)

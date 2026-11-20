@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+from copy import deepcopy
 from typing import Any
 
 from django.db import transaction
@@ -28,6 +29,7 @@ from notas.application.dto.proposal_iteration_trace import extract_plan_iteratio
 from notas.application.proposals.solver_meal_proposals import (
     create_solver_generated_meal_proposal,
 )
+from notas.application.queries.food_visual_queries import published_food_visual_paths
 from notas.application.queries.proposal_queries import (
     get_proposal_detail,
     list_dailyplan_proposals,
@@ -40,7 +42,7 @@ from notas.application.services.commands.proposal_commands import (
     create_validated_dailyplan_proposal,
     create_validated_meal_proposal,
 )
-from notas.domain.models import NutritionProposal
+from notas.domain.models import Food, NutritionProposal
 
 
 def _serialize_dto_list(items) -> list[dict]:
@@ -441,6 +443,37 @@ def _serialize_iteration_trace(proposal) -> dict | None:
     return trace.as_dict()
 
 
+def _with_published_simulation_food_images(generated_proposal: dict) -> dict:
+    """Annotate a response copy; never write image paths to the proposal snapshot."""
+    generated_proposal = deepcopy(generated_proposal)
+    validation_data = generated_proposal.get("validation_summary")
+    simulation = validation_data.get("simulation", {}) if isinstance(validation_data, dict) else {}
+    dailyplan = simulation.get("dailyplan", {}) if isinstance(simulation, dict) else {}
+    raw_meals = dailyplan.get("meals", []) if isinstance(dailyplan, dict) else []
+    if not isinstance(raw_meals, list):
+        raw_meals = []
+    simulated_foods = []
+    for entry in raw_meals:
+        meal = entry.get("meal") if isinstance(entry, dict) else None
+        foods = meal.get("foods") if isinstance(meal, dict) else None
+        if isinstance(foods, list):
+            simulated_foods.extend(food for food in foods if isinstance(food, dict))
+    food_ids = {
+        food["food_id"] for food in simulated_foods
+        if isinstance(food.get("food_id"), int)
+        and not isinstance(food["food_id"], bool)
+        and food["food_id"] > 0
+    }
+    image_paths = published_food_visual_paths(Food.objects.filter(id__in=food_ids)) if food_ids else {}
+    for food in simulated_foods:
+        food.pop("image_path", None)
+        food_id = food.get("food_id")
+        image_path = image_paths.get(food_id) if isinstance(food_id, int) and not isinstance(food_id, bool) else None
+        if image_path:
+            food["image_path"] = image_path
+    return generated_proposal
+
+
 def _generated_dailyplan_response_payload(
     *,
     user,
@@ -448,10 +481,10 @@ def _generated_dailyplan_response_payload(
     proposal,
     brief: NutritionBrief,
 ) -> dict:
-    generated_proposal = get_proposal_detail(
+    generated_proposal = _with_published_simulation_food_images(get_proposal_detail(
         user,
         proposal.id,
-    ).as_dict()
+    ).as_dict())
     source_proposal_data = get_proposal_detail(
         user,
         source_proposal.id,

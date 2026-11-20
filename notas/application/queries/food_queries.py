@@ -3,6 +3,7 @@ from notas.application.dto.food_dto import (
     FoodListItemDTO,
     FoodMacroDTO,
 )
+from notas.application.queries.food_visual_queries import published_food_visual_paths
 from notas.application.queries.read_boundaries import (
     get_owned_food_queryset,
     get_readable_food_or_404,
@@ -46,6 +47,7 @@ def build_food_dto(food: Food) -> FoodDTO:
         created_by_id=food.created_by_id,
         macros=build_food_macro_dto(food),
         portion_unit=food.portion_unit,
+        image_path=published_food_visual_paths([food]).get(food.id),
     )
 
 

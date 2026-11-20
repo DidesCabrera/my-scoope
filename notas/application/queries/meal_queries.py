@@ -4,6 +4,7 @@ from notas.application.dto.meal_dto import (
     MealKpiDTO,
     MealListItemDTO,
 )
+from notas.application.queries.food_visual_queries import published_food_visual_paths
 from notas.application.queries.library_queries import meal_library_queryset
 from notas.application.queries.read_boundaries import (
     get_readable_meal_or_404,
@@ -90,7 +91,7 @@ def build_meal_kpi_dto(meal: Meal, user) -> MealKpiDTO:
     )
 
 
-def build_meal_food_dto(meal_food, *, body_weight=None) -> MealFoodDTO:
+def build_meal_food_dto(meal_food, *, body_weight=None, image_path=None) -> MealFoodDTO:
     food = meal_food.food
     quantity = float(meal_food.quantity)
     factor = quantity / 100.0
@@ -124,6 +125,7 @@ def build_meal_food_dto(meal_food, *, body_weight=None) -> MealFoodDTO:
         quantity_unit=food.portion_unit,
         ppk=protein / body_weight if body_weight and protein else None,
         emoji=food.emoji,
+        image_path=image_path,
     )
 
 
@@ -146,16 +148,17 @@ def build_meal_list_item_dto(meal: Meal, user) -> MealListItemDTO:
 
 
 def build_meal_dto(meal: Meal, user) -> MealDTO:
-    meal_foods = (
+    meal_foods = list(
         meal.meal_food_set
         .select_related("food")
         .all()
         .order_by("order", "id")
     )
+    image_paths = published_food_visual_paths([item.food for item in meal_foods])
 
     body_weight = get_current_weight(user)
     foods = [
-        build_meal_food_dto(meal_food, body_weight=body_weight)
+        build_meal_food_dto(meal_food, body_weight=body_weight, image_path=image_paths.get(meal_food.food_id))
         for meal_food in meal_foods
     ]
 

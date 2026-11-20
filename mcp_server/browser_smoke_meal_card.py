@@ -7,6 +7,8 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
+from mcp_server.dev_meal_card_preview import SAMPLE_MEAL
+
 CARD_PATH = Path(__file__).parent / "myscoope_mcp" / "ui" / "meal_card_v8.html"
 SAMPLE_RESULT = {
     "ok": True,
@@ -85,7 +87,7 @@ def main():
         card = page.frame_locator("iframe")
         send_result(page, SAMPLE_RESULT)
         card.get_by_role("heading", name="Porotos negros con arroz y palta").wait_for()
-        app_link = card.get_by_role("link", name="Abrir esta comida en la app My Scoope")
+        app_link = card.get_by_role("link", name="Ver en My Scoope")
         assert app_link.get_attribute("href") == "https://myscoope-staging.onrender.com/libraries/meals/23"
         page.locator("iframe").evaluate("element => { element.contentWindow.openai = {openExternal: options => { element.contentWindow.lastOpened = options; }}; }")
         app_link.click()
@@ -94,6 +96,8 @@ def main():
         }
         page.wait_for_function("window.bridgeMessages.some(message => message.method === 'ui/notifications/size-changed' && message.params.height > 300)")
         assert card.locator("#meal-kcal").inner_text() == "931"
+        assert card.locator(".food-count svg").count() == 1
+        assert card.locator(".food-count").evaluate("element => getComputedStyle(element).backgroundColor !== getComputedStyle(document.querySelector('.meal-icon')).backgroundColor")
         assert card.locator(".kcal-box").evaluate(
             "element => Math.abs(element.getBoundingClientRect().width - element.getBoundingClientRect().height) < 1"
         )
@@ -239,6 +243,19 @@ def main():
             card.get_by_role("tab", name="Alimentos").click()
             args.screenshot_mobile.parent.mkdir(parents=True, exist_ok=True)
             card.locator("#card").screenshot(path=str(args.screenshot_mobile))
+
+        test_image = (Path(__file__).parent.parent / "food_catalog/data/legacy_visuals/maca_andina.png").read_bytes()
+        page.route("https://myscoope-staging.onrender.com/api/v1/foods/visual-assets/**",
+                   lambda route: route.fulfill(status=200, content_type="image/png", body=test_image))
+        send_result(page, SAMPLE_MEAL)
+        card.locator("#meal-foods li").first.locator("img").wait_for(state="visible")
+        assert card.locator("#meal-foods img:visible").count() == 4
+        unsafe_image = deepcopy(SAMPLE_MEAL)
+        unsafe_image["data"]["meal"]["foods"][0]["image_path"] = "https://example.com/untrusted.png"
+        send_result(page, unsafe_image)
+        card.locator("#meal-foods li").first.locator("img").wait_for(state="detached")
+        assert card.locator("#meal-foods li").first.locator("img").count() == 0
+        assert card.locator("#meal-foods li").first.locator(".food-visual-fallback").is_visible()
 
         send_result(page, {"ok": False, "data": {}, "error": {"code": "not_found"}})
         assert card.get_by_role("status").is_visible()

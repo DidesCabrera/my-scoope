@@ -11,6 +11,9 @@ const mcpCardSources = ["meal_card_v6", "meal_card_v7", "meal_card_v8", "entity_
   sourcePath: path.join(repositoryRoot, `mcp_server/myscoope_mcp/ui/${name}.source.html`),
   outputPath: path.join(repositoryRoot, `mcp_server/myscoope_mcp/ui/${name}.html`),
 }));
+const proposalCardCssPath = path.join(repositoryRoot, "mcp_server/myscoope_mcp/ui/proposal_card_v1.css");
+const proposalCardExtensionPath = path.join(repositoryRoot, "mcp_server/myscoope_mcp/ui/proposal_card_v1.extension.html");
+const proposalCardOutputPath = path.join(repositoryRoot, "mcp_server/myscoope_mcp/ui/proposal_card_v1.html");
 const mcpTokenMarker = "/* MYSCOOPE_GENERATED_UI_TOKENS */";
 
 const contract = JSON.parse(await readFile(contractPath, "utf8"));
@@ -171,6 +174,23 @@ const mcpCards = await Promise.all(mcpCardSources.map(async ({sourcePath, output
   }
   return {outputPath, content: source.replace(mcpTokenMarker, mcpTokens)};
 }));
+// Compose the proposal shell around the existing DailyPlan card, retaining its
+// renderer, tabs, responsive panels and UI System tokens in one MCP resource.
+const dailyPlanCard = mcpCards.find(({outputPath}) => outputPath.endsWith("/entity_card_v2.html"));
+const [proposalCss, proposalExtension] = await Promise.all([
+  readFile(proposalCardCssPath, "utf8"),
+  readFile(proposalCardExtensionPath, "utf8"),
+]);
+if (!dailyPlanCard || !dailyPlanCard.content.includes("</head>") || !dailyPlanCard.content.includes("</body>")) {
+  throw new Error("DailyPlan card cannot be composed into the proposal resource");
+}
+const proposalCard = {
+  outputPath: proposalCardOutputPath,
+  content: dailyPlanCard.content
+    .replace("</head>", `<style>\n${proposalCss}</style>\n</head>`)
+    .replace("</body>", `${proposalExtension}\n</body>`),
+};
+mcpCards.push(proposalCard);
 
 if (process.argv.includes("--check")) {
   const [currentCss, currentNative, ...currentMcpCards] = await Promise.all([

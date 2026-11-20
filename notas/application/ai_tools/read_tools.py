@@ -312,12 +312,27 @@ def search_dailyplans_tool(user, query: str, limit: int | None = None):
 
 
 def _read_dailyplan_data(user, dailyplan_id: int) -> dict:
-    return {
-        "dailyplan": get_dailyplan_detail(
-            user,
-            dailyplan_id,
-        ).as_dict(),
-    }
+    dailyplan = get_dailyplan_detail(user, dailyplan_id).as_dict()
+    from notas.application.services.commands.supplement_commands import require_supplements_pro
+    try:
+        require_supplements_pro(user)
+    except PermissionError:
+        pass
+    else:
+        if dailyplan["created_by_id"] == user.id:
+            from notas.domain.models import SupplementIntake
+            dailyplan["can_use_supplements"] = True
+            dailyplan["supplement_intakes"] = [
+                {
+                    "hour": intake.hour.strftime("%H:%M") if intake.hour else None,
+                    "supplements": [
+                        {"name": item.supplement_snapshot.get("name", ""), "quantity": str(item.quantity), "unit": item.unit}
+                        for item in intake.items.all()
+                    ],
+                }
+                for intake in SupplementIntake.objects.filter(dailyplan_id=dailyplan_id).prefetch_related("items")
+            ]
+    return {"dailyplan": dailyplan}
 
 
 def read_dailyplan_tool(user, dailyplan_id: int):

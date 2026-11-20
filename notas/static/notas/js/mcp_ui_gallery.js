@@ -7,18 +7,18 @@
 
   const desktopMeal = {
     id: 23,
-    name: "Porotos negros con arroz y palta",
+    name: "Pollo con arroz integral y ensalada",
     category: "Almuerzo",
     kpis: {
-      total_kcal: 931, protein: 40, carbs: 173, fat: 9.1, ppk: 0.5,
-      kcal_protein: 160, kcal_carbs: 692, kcal_fat: 81,
-      alloc_protein: 17, alloc_carbs: 74, alloc_fat: 9,
+      total_kcal: 726, protein: 70, carbs: 70, fat: 19, ppk: 1,
+      kcal_protein: 280, kcal_carbs: 280, kcal_fat: 171,
+      alloc_protein: 38, alloc_carbs: 39, alloc_fat: 23,
     },
     foods: [
-      { food_name: "Porotos negros cocidos", quantity: 340, quantity_unit: "g", ppk: 0.3, total_kcal: 459, protein: 30.1, carbs: 80.6, fat: 1.8, emoji: "🫘" },
-      { food_name: "Arroz blanco cocido", quantity: 300, quantity_unit: "g", ppk: 0.1, total_kcal: 378, protein: 8.1, carbs: 84.5, fat: 0.8, emoji: "🍚" },
-      { food_name: "Palta", quantity: 42, quantity_unit: "g", ppk: 0.0, total_kcal: 73, protein: 0.8, carbs: 3.6, fat: 6.2, emoji: "🥑" },
-      { food_name: "Tomate", quantity: 100, quantity_unit: "g", ppk: 0.0, total_kcal: 21, protein: 0.9, carbs: 3.9, fat: 0.2, emoji: "🍅" },
+      { food_name: "Pechuga de pollo cocida", quantity: 200, quantity_unit: "g", ppk: 0.9, total_kcal: 311, protein: 62, carbs: 0, fat: 7, emoji: "🍗", image_path: "/api/v1/foods/visual-assets/07ee5a6a-7dda-4951-bfc6-9c002efbe231/f25f69beb536c303385dc692860e97cbcb553d05dd1710f2cc525f64c76c40a9.png" },
+      { food_name: "Arroz integral cocido", quantity: 250, quantity_unit: "g", ppk: 0.1, total_kcal: 310, protein: 7, carbs: 67, fat: 2, emoji: "🍚", image_path: "/api/v1/foods/visual-assets/4fac0ec0-92a4-461e-8c37-4259d25b332e/2ce057b0cc43f17dd6960e76bc311d1d7b757b742d2ae4ee84afbbc7b1374def.png" },
+      { food_name: "Lechuga costina cruda", quantity: 100, quantity_unit: "g", ppk: 0, total_kcal: 15, protein: 1, carbs: 3, fat: 0, emoji: "🥬", image_path: "/api/v1/foods/visual-assets/bd300a6f-ae37-435d-89b5-89e8fae975dd/65071b7c8ed1a736d19d975772762b43709adf23ada6a5c1c379ae8e378cb720.png" },
+      { food_name: "Aceite de oliva", quantity: 10, quantity_unit: "g", ppk: 0, total_kcal: 90, protein: 0, carbs: 0, fat: 10, emoji: "🫒", image_path: "/api/v1/foods/visual-assets/0481f062-c35f-4156-8e38-8f093caedfcc/26f746387eafc47291de70cfb5d1ac25544a0d6d57b6b3b78e558ac2b461f1ba.png" },
     ],
   };
   const mobileMeal = {
@@ -31,14 +31,15 @@
       alloc_protein: 24, alloc_carbs: 67, alloc_fat: 9,
     },
     foods: [
-      { food_name: "Avena tradicional", quantity: 50, quantity_unit: "g", ppk: 0.1, total_kcal: 191, protein: 7, carbs: 34, fat: 3, emoji: "🥣" },
-      { food_name: "Yogur griego natural sin azúcar", quantity: 180, quantity_unit: "g", ppk: 0.2, total_kcal: 107, protein: 19, carbs: 7, fat: 1, emoji: "🥛" },
+      { food_name: "Avena tradicional", quantity: 50, quantity_unit: "g", ppk: 0.1, total_kcal: 191, protein: 7, carbs: 34, fat: 3, emoji: "🥣", image_path: "/api/v1/foods/visual-assets/aeba4865-b1ae-4f58-b1e8-2b0e250b08bf/8f36fb066a3c2b6d10ea6ade41890e6668646b9811af068faf3957cb7e697e06.png" },
+      { food_name: "Yogur griego natural sin azúcar", quantity: 180, quantity_unit: "g", ppk: 0.2, total_kcal: 107, protein: 19, carbs: 7, fat: 1, emoji: "🥛", image_path: "/api/v1/foods/visual-assets/cc57c9e3-4bb8-4aab-bed7-fb6b47dd9be5/9a1063b37d85bd77e5e567d12b5600e4d36054adc31b753b02c8807ceb1f037b.png" },
       { food_name: "Plátano", quantity: 100, quantity_unit: "g", ppk: 0.0, total_kcal: 99, protein: 1, carbs: 23, fat: 0, emoji: "🍌" },
       { food_name: "Arándanos", quantity: 80, quantity_unit: "g", ppk: 0.0, total_kcal: 51, protein: 1, carbs: 12, fat: 0, emoji: "🫐" },
     ],
   };
   const sampleFood = {
     id: 0, name: "Avena tradicional", category: "Cereal", portion_unit: "g",
+    image_path: "/api/v1/foods/visual-assets/aeba4865-b1ae-4f58-b1e8-2b0e250b08bf/8f36fb066a3c2b6d10ea6ade41890e6668646b9811af068faf3957cb7e697e06.png",
     macros: { total_kcal: 382, protein: 13, carbs: 67, fat: 7,
       alloc_protein: 14, alloc_carbs: 70, alloc_fat: 16 },
   };
@@ -153,7 +154,7 @@
     });
   });
   const scenarioLabels = {
-    meal: ["Porotos con arroz y palta", "Avena con yogur y fruta", "Nombre largo", "Sin alimentos", "Error de lectura"],
+    meal: ["Pollo con arroz y ensalada", "Avena con yogur y fruta", "Nombre largo", "Sin alimentos", "Error de lectura"],
     food: ["Avena tradicional", "Avena tradicional", "Nombre largo", "Sin detalle", "Error de lectura"],
     dailyplan: ["Minuta de un día", "Minuta de un día", "Nombre largo", "Sin comidas", "Error de lectura"],
   };

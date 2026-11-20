@@ -52,6 +52,10 @@ def ui_system_mcp_meal_card_preview(request):
     filename = "meal_card_v8.html" if entity == "meal" else "entity_card_v2.html" if entity == "dailyplan" else "entity_card_v1.html"
     card_path = Path(settings.BASE_DIR) / "mcp_server/myscoope_mcp/ui" / filename
     card_html = card_path.read_text(encoding="utf-8")
+    # The synthetic gallery uses published public image URLs, independent of
+    # whichever local database happens to serve the development UI.
+    image_origin = "https://www.myscoope.com"
+    card_html = card_html.replace('"__MYSCOOPE_IMAGE_ORIGIN__"', json.dumps(image_origin))
     if entity == "dailyplan":
         card_html = card_html.replace('"__MYSCOOPE_APP_BASE_URL__"', json.dumps(request.build_absolute_uri("/app")))
     elif entity == "meal":
