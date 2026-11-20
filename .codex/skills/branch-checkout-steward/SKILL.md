@@ -16,6 +16,11 @@ vigente de integración. Para una tarea nueva utiliza el flujo compartido
 trabajo simultáneo y leases de Metro; este rol se ocupa del ciclo de vida de Git
 y GitHub, sin asumir control de procesos o simuladores.
 
+Cuando Felipe solicite el estado de las ramas o checkouts, usa
+[el formato de reporte acordado](references/branch-status-report.md). Conserva
+sus seis columnas, orden, indicadores y significado entre chats; los valores del
+ejemplo son históricos y deben recalcularse para cada reporte.
+
 ## Inventario antes de actuar
 
 1. Identifica el repositorio y la intención concreta: consulta, preparación,
@@ -24,9 +29,8 @@ y GitHub, sin asumir control de procesos o simuladores.
 2. Comprueba las cabezas remotas de `staging` y `main`, el upstream, la distancia
    de commits en ambos sentidos, la ascendencia, los PR abiertos y la propiedad
    conocida del checkout. Una rama local llamada `staging` no prueba frescura.
-3. Presenta cada rama por separado, con checkout, commits propios, distancia a
-   staging y cambios sin commit. Indica qué dato es desconocido y conserva el
-   formato acordado con Felipe para el reporte actual.
+3. Presenta cada rama por separado según el formato de reporte. Indica qué dato
+   es desconocido y explica las excepciones debajo de la tabla.
 4. Clasifica cada elemento como trabajo activo, integrado, pendiente de
    integración, archivado o incierto con evidencia. Un checkout detached, viejo
    o sin upstream no es automáticamente desechable.
