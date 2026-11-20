@@ -15,6 +15,13 @@ def map_exception_to_tool_error(exc: Exception) -> AIToolResult:
     capas API/MCP/IA.
     """
     from nutrition_solver.application.culinary_planner import CulinaryPlanningError
+    from notas.application.ai_intake.proposal_from_brief import NutritionBriefPendingQuestions
+    if isinstance(exc, NutritionBriefPendingQuestions):
+        return tool_error(
+            code="nutrition_brief_has_pending_questions",
+            message="The nutrition brief is incomplete. Ask for the listed fields before retrying; no proposal was created.",
+            details={"missing_fields": list(exc.missing_fields)},
+        )
     if isinstance(exc, CulinaryPlanningError):
         return tool_error(code=exc.code, message="No se creó una propuesta. Revisa el catálogo o las condiciones indicadas; no se relajaron límites.", details=exc.details)
     if isinstance(exc, (Http404, ObjectDoesNotExist)):

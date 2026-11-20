@@ -19,6 +19,14 @@ AI_NUTRITION_BRIEF_INTENT = "ai_nutrition_brief"
 AI_INTAKE_SOURCE = "home_ai_intake"
 
 
+class NutritionBriefPendingQuestions(ValueError):
+    """Missing canonical fields needed to create a reviewable proposal."""
+
+    def __init__(self, missing_fields: list[str]):
+        self.missing_fields = tuple(missing_fields)
+        super().__init__("nutrition_brief_has_pending_questions")
+
+
 @dataclass(frozen=True)
 class AiNutritionBriefProposalResult:
     proposal: NutritionProposal
@@ -41,7 +49,7 @@ def create_nutrition_brief_proposal(
     required_fields = required_proposal_fields(brief)
 
     if required_fields:
-        raise ValueError("nutrition_brief_has_pending_questions")
+        raise NutritionBriefPendingQuestions(required_fields)
 
     title = _build_proposal_title(brief)
     summary = _build_proposal_summary(brief)

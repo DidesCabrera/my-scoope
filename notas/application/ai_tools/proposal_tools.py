@@ -11,10 +11,14 @@ from notas.application.ai_intake.nutrition_brief import (
     build_required_follow_up_questions,
     deserialize_brief,
     is_brief_ready_for_proposal,
+    required_proposal_fields,
     serialize_brief,
 )
 from notas.application.ai_intake.plan_iteration import create_iterated_dailyplan_proposal
-from notas.application.ai_intake.proposal_from_brief import create_nutrition_brief_proposal
+from notas.application.ai_intake.proposal_from_brief import (
+    NutritionBriefPendingQuestions,
+    create_nutrition_brief_proposal,
+)
 from notas.application.ai_tools.runtime import run_ai_tool
 from notas.application.dto.nutrition_subject_context_dto import (
     SUBJECT_SOURCE_MANUAL_CHAT_DATA,
@@ -335,7 +339,7 @@ def _create_nutrition_engine_dailyplan_proposal_from_drafts_data(
         raw_prompt=raw_prompt,
     )
     if not is_brief_ready_for_proposal(brief):
-        raise ValueError("nutrition_brief_has_pending_questions")
+        raise NutritionBriefPendingQuestions(required_proposal_fields(brief))
 
     if brief.requested_entity == "program":
         from notas.application.ai_intake.program_generator import (
