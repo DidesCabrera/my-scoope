@@ -154,6 +154,22 @@ def summarize_created_proposal_result(result: MCPToolCallResult) -> dict[str, An
     """Keep nutrition/profile snapshots out of the automatic MCP response."""
     if not result.ok:
         error = result.error or {}
+        missing_fields = (error.get("details") or {}).get("missing_fields")
+        if error.get("code") == "nutrition_brief_has_pending_questions" and isinstance(missing_fields, list):
+            safe_fields = [
+                field for field in missing_fields
+                if field in {"goal", "weight_kg", "height_cm", "age_years", "sex", "activity_level"}
+            ]
+            if safe_fields:
+                return {
+                    "ok": False,
+                    "data": {},
+                    "error": {
+                        "code": "nutrition_brief_has_pending_questions",
+                        "message": "No proposal was created. Ask the user for the missing fields, then retry.",
+                        "details": {"missing_fields": safe_fields},
+                    },
+                }
         return {
             "ok": False,
             "data": {},
@@ -469,12 +485,19 @@ def register_mcp_tools(server: FastMCP) -> None:
         annotations=annotations[TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL],
     )
     def create_nutrition_engine_dailyplan_proposal(
-        nutrition_brief: dict[str, Any],
+        nutrition_brief: Annotated[dict[str, Any], Field(description=(
+            "Use canonical flat keys: goal (fat_loss, muscle_gain, maintenance, performance, healthy_eating), "
+            "weight_kg, height_cm, age_years, sex (male or female), activity_level "
+            "(sedentary, light, moderate, high, very_high), meals_per_day, requested_entity=daily_plan. "
+            "If calorie_target is omitted, goal and all five profile fields are required. "
+            "Do not put these facts only in raw_prompt or nested profile_draft. "
+            "When the tool returns missing_fields, ask only for those facts before retrying."
+        ))],
     ) -> dict[str, Any]:
         """
         Create a reviewable DailyPlan proposal using the internal nutrition engine.
 
-        This tool creates NutritionProposal artifacts only.
+        This tool creates NutritionProposal artifacts only. A successful result returns a pending proposal ID.
         It does not apply a final DailyPlan.
         """
         client = create_api_client(required_scope=MCP_SCOPE_PROPOSALS_CREATE)
@@ -526,7 +549,11 @@ def register_entity_read_tools(
         meta={"ui": {"resourceUri": FOOD_CARD_RESOURCE_URI}},
     )
     def read_food(food_id: Annotated[int, Field(ge=1)]) -> MealReadResult:
-        """Read an authorized Food and show its nutrition card in compatible chats."""
+        """Read an authorized Food and show the My Scoope nutrition card.
+
+        When the card renders, use it as the primary display. Add only a short
+        contextual sentence, not another nutrition table or card unless asked.
+        """
         client = create_api_client()
         result = dispatch_tool_call(client=client, tool_name=TOOL_READ_FOOD, arguments={"food_id": food_id})
         return serialize_tool_result(result)
@@ -536,7 +563,11 @@ def register_entity_read_tools(
         meta={"ui": {"resourceUri": DAILYPLAN_CARD_RESOURCE_URI}},
     )
     def read_dailyplan(dailyplan_id: int) -> MealReadResult:
-        """Read a DailyPlan available to the authenticated My Scoope API context."""
+        """Read an authorized DailyPlan and show its My Scoope card.
+
+        When the card renders, summarize only what helps answer the question;
+        avoid rebuilding the same plan card in prose.
+        """
         client = create_api_client()
         result = dispatch_tool_call(
             client=client,
@@ -571,7 +602,11 @@ def register_meal_tools(
         meta={"ui": {"resourceUri": MEAL_CARD_RESOURCE_URI}},
     )
     def read_meal(meal_id: Annotated[int, Field(ge=1)]) -> MealReadResult:
-        """Read an authorized Meal and show its nutrition card in compatible chats."""
+        """Read an authorized Meal and show the My Scoope nutrition card.
+
+        When the card renders, use it as the primary display; avoid a duplicate
+        nutrition table unless requested.
+        """
         client = create_api_client()
         result = dispatch_tool_call(
             client=client,

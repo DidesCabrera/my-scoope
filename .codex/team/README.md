@@ -10,6 +10,13 @@ This directory is the organizational home for My Scoope's AI team. It answers:
 - which roles are active, provisional, or under evaluation;
 - where durable context for an area or initiative is recorded.
 
+Felipe defines the team. This inventory describes accepted or pilot capabilities;
+it does not prove that a role was used in a conversation. The operational evidence
+for role interventions, project association, results, and evaluations is kept in
+`/Users/felipedides/Desktop/MyScoope/OPERACIONES/EQUIPO_AI/`. The associated
+company project is `PRJ-OPS-001` in the project portfolio. A usage report must
+state its reviewed period and coverage; missing evidence is unknown, not zero use.
+
 Use the files in this order:
 
 1. `organization.md` for the operating model and organigram;
@@ -17,6 +24,9 @@ Use the files in this order:
 3. `areas/` for an area's operating model and maintained control registers;
 4. the selected `.codex/skills/<name>/SKILL.md` for behavior and limits;
 5. `memory/README.md` and the relevant area or project memory for durable context.
+
+Role-specific, source-linked learning lives beside the relevant skill in its
+`references/learning.md`, so the installed role can recover it in a new chat.
 
 ## Authority boundary
 

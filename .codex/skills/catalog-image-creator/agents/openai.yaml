@@ -1,0 +1,6 @@
+interface:
+  display_name: "Creador de imágenes del catálogo"
+  short_description: "Crea y cura imágenes fieles a cada ficha"
+  default_prompt: "Usa $catalog-image-creator para revisar las imágenes del catálogo, recuperar decisiones previas y preparar propuestas para mi aprobación."
+policy:
+  allow_implicit_invocation: true

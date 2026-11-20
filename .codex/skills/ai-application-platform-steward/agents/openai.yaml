@@ -1,6 +1,6 @@
 interface:
-  display_name: "AI Application Platform Steward"
-  short_description: "Build and evaluate My Scoope AI capabilities"
-  default_prompt: "Usa $ai-application-platform-steward para diseñar o evaluar esta capacidad del asistente AI, definir sus contratos y preparar una implementación con gates de calidad."
+  display_name: "Encargado de Asistente AI & MCP"
+  short_description: "Implementa y evalúa el asistente y MCP"
+  default_prompt: "Usa $ai-application-platform-steward como Encargado de Asistente AI & MCP para diseñar o evaluar esta capacidad, sus contratos y sus pruebas de calidad."
 policy:
   allow_implicit_invocation: true

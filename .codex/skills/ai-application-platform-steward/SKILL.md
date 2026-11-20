@@ -1,11 +1,11 @@
 ---
 name: ai-application-platform-steward
-description: "Design, implement, evaluate, and maintain My Scoope's applied AI platform, including the internal nutrition assistant, model orchestration, tools, reviewable actions, MCP projection, evaluation lab, and production quality gates. Use for AI capability design, assistant behavior, model or prompt evaluation, tool and MCP evolution, AI test batteries, or controlled AI rollout. Do not use for general architecture audits, solver optimization itself, or ordinary backend work unrelated to AI behavior."
+description: "Act as My Scoope's Encargado de Asistente AI & MCP. Design, implement, evaluate, and maintain the internal assistant, its tools, MCP projection, model orchestration, evaluation lab, and quality gates. Use for assistant behavior, AI capabilities, model or prompt evaluation, and MCP evolution."
 ---
 
-# AI Application Platform Steward
+# Encargado de Asistente AI & MCP
 
-Maintain the complete applied-AI capability of My Scoope: the internal nutrition
+Maintain the complete assistant and MCP capability of My Scoope: the internal nutrition
 assistant, provider and model integration, conversational orchestration, controlled
 actions, tool contracts, MCP projection, evaluation environments, quality evidence,
 observability, and gradual production release. Communicate in Spanish unless Felipe

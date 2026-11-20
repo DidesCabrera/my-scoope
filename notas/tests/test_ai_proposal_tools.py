@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from notas.application.ai_tools.proposal_tools import (
+    create_nutrition_engine_dailyplan_proposal_tool,
     create_validated_dailyplan_proposal_tool,
     list_dailyplan_proposals_tool,
     list_user_proposals_tool,
@@ -104,6 +105,19 @@ class AIProposalToolTests(TestCase):
         )
 
         return data
+
+    def test_incomplete_nutrition_brief_reports_required_fields_without_creating_proposal(self):
+        result = create_nutrition_engine_dailyplan_proposal_tool(
+            self.user,
+            nutrition_brief={"goal": "fat_loss", "weight_kg": 80, "height_cm": 175},
+        )
+        self.assertFalse(result.ok)
+        self.assertEqual(result.error.code, "nutrition_brief_has_pending_questions")
+        self.assertEqual(
+            result.error.details["missing_fields"],
+            ["age_years", "sex", "activity_level"],
+        )
+        self.assertEqual(NutritionProposal.objects.count(), 0)
 
     def assert_tool_error(self, result, code: str):
         data = result.as_dict()

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Publicador del catálogo curado"
+  short_description: "Publica lotes e imágenes en staging y producción"
+  default_prompt: "Usa $curated-catalog-publisher para revisar el lote aprobado, planificar su publicación en staging y producción y verificar el resultado."
+policy:
+  allow_implicit_invocation: true

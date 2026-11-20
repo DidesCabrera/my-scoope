@@ -169,6 +169,29 @@ class MCPProtocolServerTests(unittest.TestCase):
             },
         )
 
+    def test_incomplete_brief_returns_only_safe_missing_field_names(self):
+        result = MCPToolCallResult(
+            ok=False,
+            data={},
+            error={
+                "code": "nutrition_brief_has_pending_questions",
+                "message": "Private user input",
+                "details": {"missing_fields": ["goal", "activity_level", "private_note"]},
+            },
+        )
+        self.assertEqual(
+            summarize_created_proposal_result(result),
+            {
+                "ok": False,
+                "data": {},
+                "error": {
+                    "code": "nutrition_brief_has_pending_questions",
+                    "message": "No proposal was created. Ask the user for the missing fields, then retry.",
+                    "details": {"missing_fields": ["goal", "activity_level"]},
+                },
+            },
+        )
+
     def test_create_mcp_server_registers_all_mvp_tools_without_sdk_internal_assertions(self):
         server = create_mcp_server()
 

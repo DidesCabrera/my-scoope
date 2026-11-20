@@ -16,7 +16,7 @@ mathematical solution.
 
 ## Establish the real problem
 
-1. Read `AGENTS.md`, `.codex/team/memory/areas/product-technology.md`, and only the
+1. Read `AGENTS.md`, `.codex/team/memory/areas/product.md`, and only the
    current product, solver, catalog, architecture, code, tests, or observed results
    needed for the question.
 2. Identify the target user, goal, planning horizon, inputs, expected result,

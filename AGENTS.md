@@ -11,13 +11,20 @@ live under `.codex/skills/`.
 - Use `.codex/team/capability-registry.yaml` as the organizational inventory. A
   role's `SKILL.md` remains authoritative for that role's behavior and limits.
 - Store durable area and initiative context in `.codex/team/memory/` only when it
-  helps later work. Link to product sources of truth instead of copying them.
+  helps later work. Keep role-specific learning in the selected skill's
+  `references/learning.md` and link to product sources of truth.
 - Team memory is not authoritative for product behavior, architecture, data
   contracts, permissions, accounting treatment, or accepted business decisions.
 - Never store secrets, credentials, private customer data, health data, raw
   financial account data, or unnecessary personal information in team memory.
 - Creating a role does not grant it permission to mutate external systems. The
   current user request and the role's authority boundaries still control writes.
+- Felipe defines the team's roles, mandates, and organization. Do not infer that
+  a chat used a role from its title, project folder, or an installed skill. When
+  reporting role usage or quality, use attributable conversation and outcome
+  evidence with an explicit coverage limit. The operational record is
+  `/Users/felipedides/Desktop/MyScoope/OPERACIONES/EQUIPO_AI/`; if unavailable, say so rather
+  than estimating a ranking.
 
 ## Fresh task checkout boundary
 
