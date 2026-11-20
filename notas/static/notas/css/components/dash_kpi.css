@@ -71,6 +71,10 @@ height: 34px;
   color: inherit;
 }
 
+html[data-theme="dark"] .dash-kpi-comp .tot p {
+  color: var(--text-muted);
+}
+
 .dash-kpi-comp.mini .tot p {
 font-size: 0.7rem;
 }

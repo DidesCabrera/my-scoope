@@ -71,6 +71,11 @@ const entityVariable = {
 const entityLines = Object.entries(shared.entities).map(
   ([key, value]) => `  --entity-${entityVariable[key] ?? kebab(key)}: ${value};`,
 );
+const webDarkEntityLines = Object.entries(platforms.web.themes.dark.entities ?? {}).flatMap(([key, value]) => {
+  if (!(key in shared.entities)) throw new Error(`Unknown web dark entity: ${key}`);
+  const name = entityVariable[key] ?? kebab(key);
+  return [`  --entity-${name}: ${value};`, `  --color-${name}: ${value};`];
+});
 const nutritionVariable = {
   quantity: "qty",
 };
@@ -99,6 +104,7 @@ const css = [
   "",
   "html[data-theme=\"dark\"] {",
   ...themeCss(dark),
+  ...webDarkEntityLines,
   "}",
   "",
 ].join("\n");

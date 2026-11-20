@@ -156,6 +156,9 @@
           "allocationPanelTrack": "#FFFFFF"
         },
         "dark": {
+          "entities": {
+            "dailyPlan": "#7C4DDB"
+          },
           "surfaceApp": "#000000",
           "surfacePage": "#121212",
           "surfaceCard": "#121212",
