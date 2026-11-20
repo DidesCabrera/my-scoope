@@ -14,7 +14,7 @@ roles:
     class: "steward"
     status: "active"
     path: ".codex/skills/ai-team-capability-steward/SKILL.md"
-    purpose: "Design and maintain a small, sufficient, and trustworthy AI team."
+    purpose: "Maintain an evidence-based capability inventory and recommend team improvements for Felipe to decide."
   - name: "strategic-product-advisor"
     area: "product-technology"
     class: "advisor"

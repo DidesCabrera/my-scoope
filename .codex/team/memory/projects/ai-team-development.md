@@ -26,9 +26,24 @@ finance, and commercial and marketing work as My Scoope grows.
 
 ## Evaluation plan
 
-Use the roles in real conversations. Capture only evidence that changes role scope,
-authority, routing, or validation. Review pilot roles after repeated use and decide
-whether to activate, revise, merge, or retire them.
+Felipe defines the team. The operational project `PRJ-OPS-001` in
+`/Users/felipedides/Desktop/MyScoope/OPERACIONES/PORTAFOLIO/` tracks continuity
+and evaluation across chats. Its evidence register is in
+`/Users/felipedides/Desktop/MyScoope/OPERACIONES/EQUIPO_AI/`.
+
+As of 2026-11-19, the role registry and project lead assignments do not establish
+actual usage frequency or quality. The new intervention register starts empty;
+historical usage is unknown until a bounded, attributable review is completed.
+Felipe reports substantial use of the Chile tax advisor. A previous ranking of
+role usage lacked sufficient coverage and must not be reused as evidence.
+The registry lists 22 roles, but only three role skills are installed in the
+current Codex host (`ai-application-platform-steward`,
+`brand-identity-steward`, and `mobile-store-release-steward`). Repository files
+alone do not make the remaining roles generally discoverable in new chats.
+
+Use real conversations to evaluate outcomes and capture only durable, accepted
+learning. Report the reviewed sample and its limits. Recommend role changes to
+Felipe; do not silently change his team.
 
 ## Open questions
 

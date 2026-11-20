@@ -1,12 +1,12 @@
 # AI Team Organization
 
 Status: active
-Last reviewed: 2026-11-16
+Last reviewed: 2026-11-19
 
 ```mermaid
 flowchart TD
     F[Felipe Dides\nFinal authority]
-    C[AI Team Capability Steward\nTeam design and skill lifecycle]
+    C[AI Team Capability Steward\nCapability evidence and skill lifecycle]
 
     F --> C
 
@@ -56,9 +56,9 @@ flowchart TD
     BR -. store assets .-> MSRS
     BR -. catalog image style .-> CCS
 
-    C -. designs and reviews .-> PT
-    C -. designs and reviews .-> FIN
-    C -. designs and reviews .-> CM
+    C -. audits and recommends .-> PT
+    C -. audits and recommends .-> FIN
+    C -. audits and recommends .-> CM
 ```
 
 ## Relationship semantics
@@ -67,6 +67,8 @@ flowchart TD
 - Dotted lines show capability governance. The Capability Steward does not manage
   the daily output of every role.
 - Felipe can converse directly with every role and remains the final authority.
+- Felipe defines the team's composition and mandates. The Capability Steward
+  documents evidence and recommends changes only when Felipe requests advice.
 - Coordinators delegate only when specialization or independent evidence adds
   value. Simple work stays with one role.
 - Specialists may collaborate temporarily across boundaries, then return a compact
