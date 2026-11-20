@@ -53,13 +53,13 @@ def test_conversation_gallery_runs_the_mcp_card_with_synthetic_states(
     anonymous_page.goto(f"{base_url}/app/dev/ui-system/#conversation-ui")
     card = anonymous_page.frame_locator("#mcp-meal-frame")
 
-    expect(card.get_by_role("heading", name="Porotos negros con arroz y palta")).to_be_visible()
-    expect(card.locator("#meal-kcal")).to_have_text("931")
-    expect(card.locator("#meal-protein-bar")).to_have_attribute("aria-label", "17%")
-    expect(card.locator("#meal-carbs-bar")).to_have_attribute("aria-label", "74%")
+    expect(card.get_by_role("heading", name="Pollo con arroz integral y ensalada")).to_be_visible()
+    expect(card.locator("#meal-kcal")).to_have_text("726")
+    expect(card.locator("#meal-protein-bar")).to_have_attribute("aria-label", "38%")
+    expect(card.locator("#meal-carbs-bar")).to_have_attribute("aria-label", "39%")
     expect(card.locator("#meal-food-table tr")).to_have_count(4)
     expect(card.locator("#meal-food-table")).to_be_visible()
-    expect(card.get_by_text("Porotos negros cocidos").first).to_be_visible()
+    expect(card.get_by_text("Pechuga de pollo cocida").first).to_be_visible()
     card_height = card.locator("body").evaluate("element => element.scrollHeight")
     anonymous_page.wait_for_function(
         "height => document.querySelector('#mcp-meal-frame').clientHeight >= height",
