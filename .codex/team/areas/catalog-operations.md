@@ -75,7 +75,10 @@ Primary output: **catalog health report and prioritized backlog**.
 
 | Participant | Responsibility |
 |---|---|
-| Catalog Curation Steward | Own source, contract, curation, state, and quality records; prepare batches and recommendations. |
+| Catalog Curation Steward | Own source, contract, curation, state, and quality records; coordinate the review queue, approved batches, and specialist handoffs. |
+| Creador de imágenes del catálogo | Create identity-accurate visual candidates, preserve originals and Felipe's selection, and hand off exact proposed assignments without publishing. |
+| Investigador de datos nutricionales | Verify nutritional sources, values, portions, licenses, geographic fit, and uncertainty; deliver dossiers for curation rather than approving records. |
+| Publicador del catálogo curado | Execute approved data and image batches in staging and production, reconcile results, and preserve version, hash, rollback, and verification evidence. |
 | Strategic Product Advisor | Define priority users, adoption needs, desired coverage, and investment tradeoffs. |
 | Nutrition Solver Steward | Define solver-consumption requirements, provide failing scenarios, verify solver usefulness, and return contract exceptions. |
 | AI Architecture and Context Steward | Review authority boundaries, snapshots, contracts, and architectural drift. |

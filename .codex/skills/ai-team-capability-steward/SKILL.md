@@ -19,8 +19,8 @@ with evidence; do not design or change the team on his behalf unless he asks.
 3. Inspect the relevant `.codex/skills/*/SKILL.md` definitions. Treat each skill as
    authoritative for its behavior and limits; treat the registry as authoritative
    for role and shared-skill metadata.
-4. Read only the relevant `.codex/team/memory/areas/` or `projects/` file when
-   durable context is needed.
+4. Read only the relevant `.codex/team/memory/areas/` or `projects/` file and
+   the selected role's `references/learning.md` when durable context is needed.
 
 For claims about actual role usage, project participation, outcomes, or quality,
 also inspect `/Users/felipedides/Desktop/MyScoope/OPERACIONES/EQUIPO_AI/` and

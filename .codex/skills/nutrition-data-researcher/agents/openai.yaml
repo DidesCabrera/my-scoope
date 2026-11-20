@@ -1,0 +1,6 @@
+interface:
+  display_name: "Investigador de datos nutricionales"
+  short_description: "Verifica fuentes y composición nutricional"
+  default_prompt: "Usa $nutrition-data-researcher para investigar los datos de estos alimentos, contrastar fuentes y entregar un dossier con incertidumbres."
+policy:
+  allow_implicit_invocation: true

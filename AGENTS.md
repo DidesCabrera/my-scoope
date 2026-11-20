@@ -11,7 +11,8 @@ live under `.codex/skills/`.
 - Use `.codex/team/capability-registry.yaml` as the organizational inventory. A
   role's `SKILL.md` remains authoritative for that role's behavior and limits.
 - Store durable area and initiative context in `.codex/team/memory/` only when it
-  helps later work. Link to product sources of truth instead of copying them.
+  helps later work. Keep role-specific learning in the selected skill's
+  `references/learning.md` and link to product sources of truth.
 - Team memory is not authoritative for product behavior, architecture, data
   contracts, permissions, accounting treatment, or accepted business decisions.
 - Never store secrets, credentials, private customer data, health data, raw

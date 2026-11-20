@@ -1,7 +1,7 @@
 # Catalog Operations Memory
 
 Status: pilot
-Last reviewed: 2026-11-15
+Last reviewed: 2026-11-19
 Owner role: `catalog-curation-steward`
 
 ## Objective
@@ -26,6 +26,11 @@ Maintain Foods, Meals, and Daily Plans as trustworthy operational assets through
 - The Nutrition Solver Steward defines and verifies the contract required by the
   solver, while Catalog Operations owns the records, provenance, curation, and
   publication that satisfy the accepted producer side of that contract.
+- Felipe defined three specialist roles for image creation, nutritional data
+  research, and approved-batch publication on 2026-11-19. Their reusable,
+  source-linked learning is in each skill's `references/learning.md`; the Catalog Curation
+  Steward coordinates review and handoff without treating prior chat titles as
+  proof of role invocation.
 
 ## Evaluation target
 

@@ -25,6 +25,12 @@ flowchart TD
 
     F --> CO[Catalog operations]
     CO --> CCS[Catalog Curation Steward]
+    CO --> CIC[Creador de imágenes del catálogo]
+    CO --> NDR[Investigador de datos nutricionales]
+    CO --> CCP[Publicador del catálogo curado]
+    CCS -. coordinates review handoffs .-> CIC
+    CCS -. coordinates review handoffs .-> NDR
+    CCS -. coordinates approved batches .-> CCP
     SPA -. defines product priorities .-> CCS
     ACS -. protects data boundaries .-> CCS
     SPA -. defines solver outcomes .-> NSS
@@ -55,6 +61,7 @@ flowchart TD
     BR -. visual guidance .-> SPA
     BR -. store assets .-> MSRS
     BR -. catalog image style .-> CCS
+    BR -. visual guidance .-> CIC
 
     C -. audits and recommends .-> PT
     C -. audits and recommends .-> FIN
@@ -76,6 +83,11 @@ flowchart TD
 - Catalog Operations is a permanent operating area. Its steward maintains catalog
   data quality and preparation; Product determines which coverage creates value,
   and Architecture protects authoritative data boundaries.
+- Felipe defined three catalog specialists: the image creator prepares approved
+  visual assets, the nutrition researcher provides source-linked dossiers, and
+  the publisher executes approved data and image batches in staging and
+  production. They are peers in Catalog Operations; the Catalog Curation Steward
+  coordinates review handoffs and maintains the area's quality and review queue.
 - The Nutrition Solver Steward owns solver quality criteria, consumption
   contracts, evaluation evidence, and the improvement backlog. Catalog Operations
   owns the source data and publication process; neither role silently changes the

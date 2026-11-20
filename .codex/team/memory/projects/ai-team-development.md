@@ -42,6 +42,15 @@ were installed in the Codex host (`ai-application-platform-steward`,
 installed `ai-team-capability-steward` as a fourth. Repository files alone do not
 make the remaining 18 roles generally discoverable in new chats.
 
+On 2026-11-19 Felipe defined `catalog-image-creator`,
+`nutrition-data-researcher`, and `curated-catalog-publisher` as distinct roles
+within Catalog Operations. Their skills package dated, source-linked learning in
+`references/learning.md` and begin as pilots: the prior domain work is real, but
+cross-chat behavior under these new skills remains to be evaluated. The three
+skills and the existing `catalog-curation-steward` were installed in the Codex
+host. The registry now lists 25 roles; eight are installed in this host. This is
+an installation count, not a usage or quality measure.
+
 Use real conversations to evaluate outcomes and capture only durable, accepted
 learning. Report the reviewed sample and its limits. Recommend role changes to
 Felipe; do not silently change his team.

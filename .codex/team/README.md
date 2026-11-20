@@ -25,6 +25,9 @@ Use the files in this order:
 4. the selected `.codex/skills/<name>/SKILL.md` for behavior and limits;
 5. `memory/README.md` and the relevant area or project memory for durable context.
 
+Role-specific, source-linked learning lives beside the relevant skill in its
+`references/learning.md`, so the installed role can recover it in a new chat.
+
 ## Authority boundary
 
 This directory is authoritative for AI-team organization only. It does not define
