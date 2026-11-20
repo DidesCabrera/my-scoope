@@ -1,7 +1,7 @@
 # Asistente AI & MCP — memoria de área
 
 Status: active
-Last reviewed: 2026-11-19
+Last reviewed: 2026-11-20
 Sponsor and final authority: Felipe Dides
 Owner role: `ai-application-platform-steward` (ID técnico conservado)
 
@@ -10,6 +10,11 @@ Owner role: `ai-application-platform-steward` (ID técnico conservado)
 Diseñar, implementar, evaluar y mantener el asistente interno, sus tools, la
 proyección MCP, la orquestación de modelos y el laboratorio de evaluación.
 El nombre visible del rol es **Encargado de Asistente AI & MCP**.
+Desde 2026-11-20, el área también incluye al **Encargado de creación de
+componentes AI & MCP** (`ai-mcp-component-creator`, piloto). Este especialista
+construye y valida la interfaz del asistente y las tarjetas MCP en móvil y
+escritorio. El encargado principal mantiene los contratos de capacidad, tools y
+exposición MCP; Producto y Marca conservan sus contratos transversales.
 
 ## Fuentes y traspasos
 

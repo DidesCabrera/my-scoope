@@ -1,6 +1,6 @@
 schema_version: 2
 owner: "Felipe Dides"
-last_reviewed: "2026-11-19"
+last_reviewed: "2026-11-20"
 lifecycle_states:
   - "proposal"
   - "pilot"
@@ -39,6 +39,12 @@ roles:
     status: "pilot"
     path: ".codex/skills/ai-application-platform-steward/SKILL.md"
     purpose: "Encargado de Asistente AI & MCP: implement, evaluate, and maintain the assistant, tools, MCP projection, and AI quality gates."
+  - name: "ai-mcp-component-creator"
+    area: "assistant-ai-mcp"
+    class: "specialist"
+    status: "pilot"
+    path: ".codex/skills/ai-mcp-component-creator/SKILL.md"
+    purpose: "Create and verify assistant and MCP Apps interface components across mobile and desktop clients."
   - name: "mobile-store-release-steward"
     area: "product"
     class: "steward"

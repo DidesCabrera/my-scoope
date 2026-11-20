@@ -1,7 +1,7 @@
 # AI Team Organization
 
 Status: active
-Last reviewed: 2026-11-19
+Last reviewed: 2026-11-20
 
 ```mermaid
 flowchart TD
@@ -21,6 +21,8 @@ flowchart TD
 
     F --> AI["Asistente AI & MCP"]
     AI --> AAPS["Encargado de Asistente AI & MCP"]
+    AI --> AMCC["Encargado de creación de componentes AI & MCP"]
+    AAPS -. capability and data contract .-> AMCC
 
     F --> SUP[Soporte]
     SUP --> OL[Líder de observabilidad]
@@ -93,9 +95,12 @@ flowchart TD
 - Producto contains the Nutrition Solver Steward, AI Architecture and Context
   Steward, and Mobile Store Release Steward. Architecture and Context helps an AI
   understand the codebase and its current boundaries before changing it.
-- Asistente AI & MCP contains the role visibly named Encargado de Asistente AI &
-  MCP. Soporte contains Observability Lead and its mobile, backend, release, and
-  independent verification specialists.
+- Asistente AI & MCP contains the Encargado de Asistente AI & MCP and the
+  Encargado de creación de componentes AI & MCP. The latter owns presentation
+  across mobile and desktop clients for assistant and MCP interfaces; the former
+  owns capability, tool, and MCP exposure contracts. Soporte contains
+  Observability Lead and its mobile, backend, release, and independent
+  verification specialists.
 - The Branch and Checkout Steward owns requested Git branch, PR, and worktree
   lifecycle actions. Parallel Work Coordinator owns the read-only simultaneous
   work audit and Metro coordination. They share evidence but do not duplicate

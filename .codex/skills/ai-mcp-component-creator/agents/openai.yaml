@@ -1,0 +1,6 @@
+interface:
+  display_name: "Encargado de creación de componentes AI & MCP"
+  short_description: "Crea componentes del asistente para móvil y escritorio"
+  default_prompt: "Usa $ai-mcp-component-creator para diseñar o revisar este componente del asistente o MCP en móvil y escritorio."
+policy:
+  allow_implicit_invocation: true

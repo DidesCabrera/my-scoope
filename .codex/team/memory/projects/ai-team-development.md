@@ -30,6 +30,10 @@ and evaluates its capability system.
   Gestión de Proyectos. Decision 0002 records the exact assignments.
 - `branch-checkout-steward` was defined as a pilot for GitHub branch, PR, and
   checkout lifecycle, distinct from read-only parallel-work audits.
+- On 2026-11-20 Felipe defined `ai-mcp-component-creator` as a specialist pilot
+  in Asistente AI & MCP for mobile and desktop assistant/MCP interface components.
+  The registry now lists 27 roles, and this skill was installed in the Codex host
+  for use in new chats. Installation does not establish usage or quality.
 
 ## Evaluation plan
 
