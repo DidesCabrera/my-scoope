@@ -1,0 +1,6 @@
+interface:
+  display_name: "Encargado de ramas y checkouts"
+  short_description: "Ordena ramas, PR y checkouts con evidencia"
+  default_prompt: "Usa $branch-checkout-steward para revisar mis ramas y checkouts, distinguir trabajo activo del integrado y proponer el siguiente paso seguro."
+policy:
+  allow_implicit_invocation: true

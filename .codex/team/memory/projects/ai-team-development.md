@@ -7,8 +7,10 @@ Owner role: `ai-team-capability-steward`
 
 ## Desired outcome
 
-Prepare a coherent set of AI roles that can support product and technology,
-finance, and commercial and marketing work as My Scoope grows.
+Maintain a coherent set of AI roles across Gestión de Proyectos, Producto,
+Asistente AI & MCP, Soporte, Curación de Catálogos, Finanzas, and Comercial y
+Marketing as My Scoope grows. Felipe defines the team; this initiative records
+and evaluates its capability system.
 
 ## Current result
 
@@ -23,6 +25,11 @@ finance, and commercial and marketing work as My Scoope grows.
 - Catalog Operations is recognized as a distinct company area and the
   `catalog-curation-steward` role is available as a pilot.
 - Durable memory is separated into areas, projects, and accepted AI-team decisions.
+- Felipe reorganized the former Product and Technology area into Producto,
+  Asistente AI & MCP, and Soporte; the former Team Capabilities area is now
+  Gestión de Proyectos. Decision 0002 records the exact assignments.
+- `branch-checkout-steward` was defined as a pilot for GitHub branch, PR, and
+  checkout lifecycle, distinct from read-only parallel-work audits.
 
 ## Evaluation plan
 
@@ -48,8 +55,15 @@ within Catalog Operations. Their skills package dated, source-linked learning in
 `references/learning.md` and begin as pilots: the prior domain work is real, but
 cross-chat behavior under these new skills remains to be evaluated. The three
 skills and the existing `catalog-curation-steward` were installed in the Codex
-host. The registry now lists 25 roles; eight are installed in this host. This is
-an installation count, not a usage or quality measure.
+host. At that stage the registry listed 25 roles and eight were installed in
+this host. This is an installation count, not a usage or quality measure.
+
+After decision 0002 and the new branch/checkout role, the registry lists 26
+roles. Eighteen role skills are installed in this host, including the roles
+assigned to Gestión de Proyectos, Producto, Asistente AI & MCP, Soporte and
+Curación de Catálogos. The shared `fresh-task-checkout` and
+`publish-to-staging` skills were also installed for Git work. Neither
+installation nor area assignment proves real usage or quality.
 
 Use real conversations to evaluate outcomes and capture only durable, accepted
 learning. Report the reviewed sample and its limits. Recommend role changes to
@@ -60,3 +74,17 @@ Felipe; do not silently change his team.
 - Which technical specialists demonstrate enough recurring work to become active?
 - Which finance sources and policies can be safely connected?
 - Which commercial workflow should become the first repeatable operating process?
+
+## Evaluaciones que siguen abiertas tras la reorganización
+
+- Probar roles piloto en conversaciones reales y registrar errores, solapamientos
+  y resultados verificables antes de promoverlos.
+- Configurar los flujos provisionales de contabilidad e impuestos antes de uso
+  desatendido o de conclusiones tributarias específicas de la empresa.
+- Probar que `mobile-simulator-review` evita confundir checkout, Metro, build
+  nativa y API; que `fresh-task-checkout` parte de `origin/staging` actualizado;
+  y que `publish-to-staging` publica el contenido probado y verifica el CI exacto.
+- Probar `parallel-work-coordinator` para auditoría de trabajo simultáneo y
+  leases de Metro, sin confundirlo con el nuevo Encargado de ramas y checkouts.
+- Probar `catalog-curation-steward` con una línea base, rúbrica, dataset trazable
+  y lote acotado que distinga fuente, snapshot y datos de usuarios.

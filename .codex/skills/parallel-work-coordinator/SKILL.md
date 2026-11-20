@@ -44,6 +44,10 @@ Establish a trustworthy snapshot before recommending any lifecycle action.
 
 ## Read-only boundary
 
+Route requested Git branch, PR, or worktree lifecycle mutations to
+`branch-checkout-steward` after this audit. Do not turn the audit into a cleanup
+operation merely because a branch is detached, old, or behind.
+
 Do not mutate Git, GitHub, Codex worktrees, processes, ports, simulators, or
 Metro sessions while auditing. In particular, do not run
 `fetch`, `pull`, `checkout`, `switch`, `merge`, `rebase`, `reset`, `clean`,
