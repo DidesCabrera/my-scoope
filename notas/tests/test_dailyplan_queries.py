@@ -150,6 +150,7 @@ class DailyPlanQueryTests(TestCase):
         self.assertEqual(data["foods_count"], 2)
         self.assertEqual(len(data["meals"]), 1)
         self.assertEqual(data["meals"][0]["meal_name"], "Breakfast")
+        self.assertEqual(data["meals"][0]["hour"], "08:00")
         self.assertEqual(data["meals"][0]["foods_count"], 2)
         self.assertEqual(len(data["foods_aggregation"]), 2)
         self.assertIn("total_kcal", data["kpis"])
