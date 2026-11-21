@@ -7,11 +7,13 @@ from unittest.mock import patch
 from mcp_server.dev_meal_card_preview import (
     ENTITY_CARD_URI,
     MEAL_CARD_URI,
-    RECENT_MEAL_CARD_URI,
     PREVIOUS_MEAL_CARD_URI,
     PROBE_CARD_URI,
+    PROPOSAL_CARD_URI,
+    RECENT_MEAL_CARD_URI,
     SAMPLE_DAILYPLAN,
     SAMPLE_FOOD,
+    SAMPLE_PROPOSAL,
     create_preview_server,
     current_css,
     preview_html,
@@ -30,14 +32,16 @@ class DevMealCardPreviewTests(unittest.TestCase):
 
         tools, uri, resource, result = asyncio.run(inspect())
         self.assertTrue(create_preview_server().settings.json_response)
-        self.assertEqual(set(tools), {"preview_meal_card", "preview_food_card", "preview_dailyplan_card", "preview_minimal_card", "preview_minimal_card_v2", "preview_card_styles"})
+        self.assertEqual(set(tools), {"preview_meal_card", "preview_food_card", "preview_dailyplan_card", "preview_proposal_card", "preview_minimal_card", "preview_minimal_card_v2", "preview_card_styles"})
         self.assertEqual(tools["preview_card_styles"].meta["ui"]["visibility"], ["app"])
         self.assertEqual(uri, MEAL_CARD_URI)
         self.assertEqual(tools["preview_meal_card"].meta["openai/outputTemplate"], uri)
         self.assertEqual(resource.mime_type, "text/html;profile=mcp-app")
+        self.assertEqual(resource.meta["openai/widgetCSP"]["resource_domains"], ["https://www.myscoope.com"])
         self.assertIn('name: "preview_card_styles"', resource.content)
         self.assertEqual(len(result["data"]["meal"]["foods"]), 4)
         self.assertEqual(result["data"]["meal"]["id"], 0)
+        self.assertEqual(len([food for food in result["data"]["meal"]["foods"] if food.get("image_path")]), 4)
         recent = asyncio.run(create_preview_server().read_resource(RECENT_MEAL_CARD_URI))[0]
         self.assertIn('version: "7.0.0"', recent.content)
         previous = asyncio.run(create_preview_server().read_resource(PREVIOUS_MEAL_CARD_URI))[0]
@@ -61,12 +65,32 @@ class DevMealCardPreviewTests(unittest.TestCase):
         self.assertEqual(tools["preview_food_card"].meta["openai/outputTemplate"], food_uri)
         self.assertEqual(tools["preview_dailyplan_card"].meta["openai/outputTemplate"], plan_uri)
         self.assertIn('name: "preview_card_styles"', resource.content)
+        self.assertEqual(resource.meta["openai/widgetCSP"]["resource_domains"], ["https://www.myscoope.com"])
         self.assertIn('id="detail-link"', plan_resource.content)
         self.assertIn('"http://127.0.0.1:8000/app"', plan_resource.content)
         self.assertEqual(food_result, SAMPLE_FOOD)
         self.assertEqual(plan_result, SAMPLE_DAILYPLAN)
         self.assertEqual(food_result["data"]["food"]["id"], 0)
         self.assertEqual(plan_result["data"]["dailyplan"]["id"], 42)
+        self.assertIn("image_path", plan_result["data"]["dailyplan"]["meals"][0]["foods"][0])
+
+    def test_proposal_preview_reuses_dailyplan_resource_with_synthetic_data(self):
+        async def inspect():
+            server = create_preview_server()
+            tools = {tool.name: tool for tool in await server.list_tools()}
+            resource = (await server.read_resource(PROPOSAL_CARD_URI))[0]
+            _, result = await server.call_tool("preview_proposal_card", {})
+            return tools, resource, result
+
+        tools, resource, result = asyncio.run(inspect())
+        self.assertEqual(tools["preview_proposal_card"].meta["ui"]["resourceUri"], PROPOSAL_CARD_URI)
+        self.assertIn('id="proposal-shell"', resource.content)
+        self.assertIn('id="nutrition-tab"', resource.content)
+        self.assertIn('id="menu-tab-mobile"', resource.content)
+        self.assertEqual(result, SAMPLE_PROPOSAL)
+        self.assertEqual(len(result["data"]["dailyplan"]["meals"]), 4)
+        self.assertEqual(result["data"]["dailyplan"]["foods_count"], 15)
+        self.assertIn("image_path", result["data"]["dailyplan"]["meals"][0]["foods"][0])
 
     def test_css_reads_editable_source_each_time(self):
         with tempfile.TemporaryDirectory() as directory:

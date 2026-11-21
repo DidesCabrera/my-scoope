@@ -1,6 +1,6 @@
 # Encargado de ramas y checkouts — aprendizaje inicial
 
-Revisado: 2026-11-19. Rol definido por Felipe y registrado como `pilot`. El chat
+Revisado: 2026-11-20. Rol definido por Felipe y registrado como `pilot`. El chat
 [Encargado Ramas y Checkout](codex://threads/01a1b122-f792-72a0-945b-ba943851239b)
 contiene trabajo previo útil, pero su título no demuestra que esta skill haya
 estado activa antes de existir.
@@ -19,8 +19,10 @@ estado activa antes de existir.
   política general de borrar todos los detached.
 - **Respetar el reporte acordado.** Felipe pidió una fila por rama y distinguió
   commits propios, cambios sin commit, checkout y commits detrás. Corrigió una
-  respuesta que había cambiado ese formato; conservar preferencias explícitas
-  del reporte vigente. Fuente: chat citado, revisión de ramas del 2026-11-19.
+  respuesta que había cambiado ese formato. El contrato exacto de seis columnas,
+  confirmado con captura el 2026-11-20, quedó en
+  [branch-status-report.md](branch-status-report.md); usarlo en vez de reconstruir
+  la tabla de memoria. Fuente: chat citado y captura aportada por Felipe.
 - **Las hipótesis necesitan verificación.** El mismo chat corrigió diagnósticos
   erróneos sobre proyectos visibles y permisos Git. No atribuir bloqueos a una
   configuración, modelo o cambio de proyecto antes de comprobar la operación

@@ -18,40 +18,99 @@
     .entity-icon { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; background: var(--entity-accent); color: #fff; }
     .entity-icon svg { width: 16px; height: 16px; }
     h1 { margin: 0; overflow-wrap: anywhere; font-size: var(--font-size-title); line-height: 1.16; }
+    .entity-name-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); width: 100%; min-width: 0; }
+    .entity-name-row h1 { min-width: 0; }
+    .food-title-image { flex: none; width: 78px; height: 52px; object-fit: contain; }
     .badges { display: flex; flex-wrap: wrap; gap: 6px; }
     .badge { display: inline-flex; align-items: center; min-height: 25px; padding: 4px 8px; border-radius: 8px; background: var(--entity-accent); color: #fff; font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); }
+    .badge--meal { background: var(--entity-meal); }
+    .badge--food { background: var(--entity-food); }
+    .panel-toolbar { display: flex; align-items: center; gap: var(--space-sm); margin: 0 var(--meal-card-inline-panel-padding-x) var(--space-sm); }
+    .panel-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; min-width: 0; }
+    .panel-toggle { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 5px 10px; border: 1px solid var(--border-default); border-radius: var(--radius-pill); background: transparent; color: var(--text-muted); font: inherit; font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); cursor: pointer; }
+    .panel-toggle[aria-expanded="true"] { border-color: transparent; background: var(--panel-color); color: #fff; }
+    .panel-toggle--meal { --panel-color: var(--entity-meal); }
+    .panel-toggle--food { --panel-color: var(--entity-food); }
+    .panel-toggle--supplement { --panel-color: var(--entity-supplement); }
+    .panel-toggle svg { width: 14px; height: 14px; }
+    .panel-toggle:focus-visible { outline: 2px solid var(--text-main); outline-offset: 2px; }
+    .badge svg { width: 13px; height: 13px; margin-right: 4px; }
     .kpis { display: grid; grid-template-columns: var(--meal-card-inline-kpi-size) minmax(0, 1fr); align-items: center; gap: var(--space-lg); min-width: 0; }
-    .kcal-box { display: flex; flex-direction: column; justify-content: center; align-items: center; width: var(--meal-card-inline-kpi-size); height: var(--meal-card-inline-kpi-size); border: var(--meal-card-inline-kpi-border-width) solid var(--nutrition-kcal-border); border-radius: var(--radius-card); background: var(--nutrition-kcal); text-align: center; }
-    .kcal-box span { font-size: var(--font-size-caption); color: var(--text-muted); }
-    .kcal-box strong { font-size: 39px; line-height: 1.08; font-variant-numeric: tabular-nums; }
-    .kcal-box strong[data-long="true"] { font-size: 32px; }
+    .kcal-box { position: relative; display: grid; place-items: center; width: var(--meal-card-inline-kpi-size); height: var(--meal-card-inline-kpi-size); border: var(--meal-card-inline-kpi-border-width) solid var(--nutrition-kcal-border); border-radius: var(--radius-card); background: var(--nutrition-kcal); text-align: center; }
+    .kcal-box span { position: absolute; top: calc(14px + 5%); left: 0; width: 100%; font-size: var(--font-size-caption); color: var(--text-muted); line-height: 1; }
+    .kcal-box strong { position: relative; top: 5%; display: block; box-sizing: border-box; width: 100%; padding-inline: 3px; font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: center; }
     .macro-list { min-width: 0; }
-    .macro-row { display: grid; grid-template-columns: 92px 64px 50px minmax(0, 1fr); align-items: center; gap: var(--space-sm); min-height: 39px; border-bottom: 1px solid var(--border-soft); }
+    .macro-row { display: grid; grid-template-columns: 92px 64px 60px minmax(0, 1fr); align-items: center; gap: var(--space-sm); min-height: 39px; border-bottom: 1px solid var(--border-soft); }
     .macro-row:last-child { border-bottom: 0; }
     .macro-name { font-weight: var(--font-weight-semibold); }
     .macro-grams { grid-column: 2; grid-row: 1; text-align: right; font-variant-numeric: tabular-nums; }
-    .macro-ppk { grid-column: 3; grid-row: 1; justify-self: start; padding: 4px 6px; border-radius: 6px; background: var(--nutrition-ppk); color: #111; font-size: var(--font-size-label); font-weight: var(--font-weight-bold); white-space: nowrap; }
+    .macro-ppk { grid-column: 3; grid-row: 1; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; height: var(--meal-card-inline-bar-height); padding: 0 3px; border-radius: 6px; background: var(--nutrition-ppk); color: #111; font-size: calc(1em - 1px); font-weight: var(--font-weight-bold); white-space: nowrap; }
     .alloc-bar { position: relative; grid-column: 4; grid-row: 1; min-width: 0; height: var(--meal-card-inline-bar-height); overflow: hidden; border-radius: 6px; background: var(--alloc-bar-bg); font-variant-numeric: tabular-nums; }
     .alloc-fill { display: block; height: 100%; border-radius: inherit; }
-    .alloc-label { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: var(--text-main); font-size: var(--font-size-label); font-weight: var(--font-weight-semibold); text-shadow: 0 1px 2px var(--surface-card); }
-    .detail { margin: 0 var(--meal-card-inline-panel-padding-x) var(--meal-card-inline-panel-padding-y); }
-    .detail-toolbar { display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm); }
+    .alloc-label { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: var(--text-main); font-size: inherit; font-weight: var(--font-weight-semibold); text-shadow: 0 1px 2px var(--surface-card); }
+    .extra-panel { margin: 0 var(--meal-card-inline-panel-padding-x) var(--meal-card-inline-panel-padding-y); overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-card); background: var(--surface-card-muted); }
+    .extra-panel h2 { margin: 0; padding: 12px 14px; font-size: var(--font-size-caption); }
+    .extra-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 14px; border-top: 1px solid var(--border-soft); font-size: var(--font-size-caption); }
+    .extra-row span:last-child { flex: none; color: var(--text-muted); }
+    .food-panel-toolbar { padding: 12px 14px 0; }
+    .food-panel-toolbar .food-panel-mobile, #aggregate-food-mobile { display: none; }
+    .food-panel-scroll { overflow-x: auto; }
+    .food-panel-table { width: 100%; min-width: 980px; border-collapse: collapse; table-layout: fixed; }
+    .food-panel-table th { padding: 13px 5px 8px; color: var(--text-soft); font-size: 10px; font-weight: var(--font-weight-semibold); letter-spacing: .055em; text-align: center; text-transform: uppercase; }
+    .food-panel-table td { padding: 11px 5px; border-top: 1px solid var(--border-soft); text-align: center; font-size: var(--font-size-caption); font-variant-numeric: tabular-nums; }
+    .food-panel-table th:first-child, .food-panel-table td:first-child { width: 22%; padding-left: 14px; text-align: left; }
+    .food-panel-table th:nth-child(2) { width: 7%; }
+    .food-panel-table th:nth-child(3) { width: 6%; }
+    .food-panel-table th:nth-child(4) { width: 10%; }
+    .food-panel-table th:nth-child(5), .food-panel-table th:nth-child(6), .food-panel-table th:nth-child(7) { width: 5%; }
+    .food-panel-table th:nth-child(8) { width: 15%; }
+    .food-panel-table th:nth-child(n+9) { width: 8.3%; }
+    .food-panel-table .alloc-bar, .food-panel-mobile .alloc-bar { grid-column: auto; grid-row: auto; height: 22px; }
+    .extra-food-name { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+    .extra-food-name span { overflow-wrap: anywhere; }
+    .extra-food-image { flex: none; width: 42px; height: 28px; object-fit: contain; }
+    @media (max-width: 480px) { .extra-food-image { width: 36px; height: 24px; } }
+    @media (max-width: 600px) {
+      .food-panel-toolbar .food-panel-desktop, .food-panel-scroll.food-panel-desktop { display: none; }
+      #aggregate-food-mobile, #aggregate-food-mobile .food-panel-mobile { display: block; }
+      .food-panel-toolbar { padding: 8px; border-bottom: 1px solid var(--border-soft); }
+      .food-panel-toolbar .food-panel-mobile { display: flex; }
+      .food-panel-toolbar .detail-tabs { gap: 5px; }
+      .food-panel-toolbar .detail-tabs button { padding: 6px 9px; font-size: var(--font-size-caption); }
+      .food-panel-mobile .mobile-grid-row { grid-template-columns: minmax(0, 40fr) repeat(var(--food-metric-count), minmax(0, 20fr)); }
+      .food-panel-mobile .mobile-grid-header { grid-template-columns: minmax(0, 40fr) repeat(var(--food-metric-count), minmax(0, 20fr)); }
+      .food-panel-mobile[data-mode="calories"] { --food-metric-count: 2; }
+      .food-panel-mobile[data-mode="macros"] { --food-metric-count: 3; }
+      .food-panel-mobile[data-mode="dist"] { --food-metric-count: 4; }
+      .food-panel-mobile[data-mode="alloc"] { --food-metric-count: 3; }
+      .food-panel-mobile[data-mode="foods"] { --food-metric-count: 1; }
+      .food-panel-mobile[data-mode="foods"] .mobile-grid-row, .food-panel-mobile[data-mode="foods"] .mobile-grid-header { grid-template-columns: minmax(0, 1fr) 65px; }
+      .food-panel-mobile[data-mode="dist"] .mobile-grid-row, .food-panel-mobile[data-mode="dist"] .mobile-grid-header { grid-template-columns: minmax(0, 34fr) repeat(3, minmax(0, 10fr)) minmax(0, 26fr); }
+      .food-panel-mobile .alloc-label { font-size: 10px; }
+      .food-panel-mobile .dist-bar { height: 22px; }
+    }
+    .detail { margin: 0 var(--meal-card-inline-panel-padding-x) var(--meal-card-inline-panel-padding-y); overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-card); background: var(--surface-card-muted); }
+    .detail-toolbar { display: flex; align-items: center; gap: var(--space-sm); padding: 12px 14px 0; }
     .detail-tabs { display: flex; flex: 1; min-width: 0; gap: 8px; overflow-x: auto; scrollbar-width: none; }
     .detail-tabs::-webkit-scrollbar { display: none; }
     .detail-tabs--mobile { display: none; }
     .detail-tabs button { flex: none; padding: 7px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-pill); background: transparent; color: var(--text-muted); font: inherit; font-size: 18px; line-height: 1.15; cursor: pointer; white-space: nowrap; }
     .detail-tabs button[aria-selected="true"] { border-color: var(--text-main); background: var(--text-main); color: var(--surface-card); }
     .detail-tabs button:focus-visible { outline: 2px solid var(--entity-accent); outline-offset: 2px; }
-    .detail-link { display: inline-flex; align-items: center; justify-content: center; flex: none; gap: 5px; min-height: 34px; padding: 5px 10px; border: 1px solid var(--border-default); border-radius: var(--radius-pill); color: var(--text-main); font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); text-decoration: none; white-space: nowrap; }
+    .detail-link { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; flex: none; gap: 5px; min-height: 34px; padding: 5px 10px; border: 1px solid var(--border-default); border-radius: var(--radius-pill); color: var(--text-main); font-size: var(--font-size-caption); font-weight: var(--font-weight-semibold); text-decoration: none; white-space: nowrap; }
     .detail-link:hover, .detail-link:focus-visible { border-color: var(--text-muted); color: var(--text-main); }
     .detail-link:focus-visible { outline: 2px solid var(--entity-accent); outline-offset: 2px; }
     .detail-link svg { width: 17px; height: 17px; flex: none; }
-    .detail-panel { overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-card); background: var(--surface-card-muted); }
+    .detail-panel { overflow: hidden; }
     .menu-header, .detail-row { display: grid; grid-template-columns: minmax(0, 35fr) minmax(0, 65fr); align-items: center; gap: var(--space-sm); padding: 12px 14px; }
     .menu-header { color: var(--text-soft); font-size: 10px; font-weight: var(--font-weight-semibold); letter-spacing: .055em; text-transform: uppercase; }
     .detail-row { border-top: 1px solid var(--border-soft); font-size: var(--font-size-caption); }
-    .meal-identity { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; min-width: 0; }
+    .meal-identity { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
     .meal-identity strong { overflow-wrap: anywhere; }
+    .meal-row-icon { display: inline-grid; place-items: center; flex: none; width: 19px; height: 19px; border-radius: 5px; background: var(--entity-meal); color: #fff; }
+    .meal-row-icon svg { width: 13px; height: 13px; }
+    .nutrition-meal-identity { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+    .nutrition-meal-identity strong { overflow-wrap: anywhere; }
     .meal-time, .meal-foods { color: var(--text-muted); }
     .meal-foods { min-width: 0; overflow-wrap: anywhere; }
     .nutrition-scroll { overflow-x: auto; }
@@ -76,9 +135,8 @@
       .top { gap: var(--space-md); }
       .identity { padding-right: var(--space-md); }
       .kpis { gap: var(--space-md); }
-      .macro-row { grid-template-columns: 72px 45px 52px minmax(0, 1fr); gap: 5px; font-size: var(--font-size-caption); }
-      .macro-ppk { padding: 4px; font-size: 10px; }
-    }
+      .macro-row { grid-template-columns: 72px 45px 60px minmax(0, 1fr); gap: 5px; font-size: var(--font-size-caption); }
+          }
     @media (max-width: 600px) {
       .top { grid-template-columns: 1fr; gap: var(--space-sm); }
       .identity { padding: 0; border-right: 0; }
@@ -86,17 +144,15 @@
       .entity-icon svg { width: 13px; height: 13px; }
       .kpis { grid-template-columns: 100px minmax(0, 1fr); gap: var(--space-sm); }
       .kcal-box { width: 100px; height: 100px; }
-      .kcal-box strong[data-long="true"] { font-size: 25px; }
-      .macro-row { grid-template-columns: 58px 37px 54px minmax(0, 1fr); gap: 3px; min-height: 31px; font-size: var(--font-size-caption); }
-      .macro-ppk { padding: 3px; font-size: 10px; }
-      .macro-row .alloc-bar { height: 21px; }
+      .macro-row { grid-template-columns: 58px 37px 56px minmax(0, 1fr); gap: 5px; min-height: 31px; font-size: var(--font-size-caption); }
+            .macro-row .alloc-bar, .macro-row .macro-ppk { height: 21px; }
       h1 { font-size: 25px; }
       .detail { overflow: hidden; border: 1px solid var(--border-default); border-radius: var(--radius-card); background: var(--surface-card-muted); }
       .detail-tabs--desktop { display: none; }
-      .detail-tabs--mobile { display: flex; gap: 5px; padding: 8px; margin: 0; border-bottom: 1px solid var(--border-soft); }
+      .detail-tabs--mobile { display: flex; gap: 5px; padding: 0; margin: 0; }
+      .detail-toolbar { padding: 8px; border-bottom: 1px solid var(--border-soft); }
       .detail-tabs--mobile button { padding: 6px 9px; font-size: var(--font-size-caption); }
-      .detail-panel { border: 0; border-radius: 0; background: transparent; }
-      #nutrition-panel { display: none !important; }
+            #nutrition-panel { display: none !important; }
       .menu-header { display: none; }
       .detail-row { grid-template-columns: 1fr; gap: 5px; padding: 12px; }
       .mobile-panel { display: block; }
@@ -126,15 +182,17 @@
 
     }
     @media (max-width: 480px) {
-      .macro-row { grid-template-columns: 78px 36px 54px minmax(0, 1fr); }
+      .macro-row { grid-template-columns: 78px 36px 56px minmax(0, 1fr); }
     }
     @media (max-width: 360px) {
       body { padding: 4px; }
       .top { padding: var(--space-md); }
       h1 { font-size: 21px; }
-      .macro-row { grid-template-columns: 50px 36px 54px minmax(0, 1fr); font-size: 11px; }
+      .macro-row { grid-template-columns: 50px 36px 56px minmax(0, 1fr); gap: 4px; font-size: 11px; }
       .macro-grams, .alloc-label { font-size: 10px; }
-      .detail { margin-left: var(--space-md); margin-right: var(--space-md); }
+      .macro-ppk { font-size: 9px; }
+      .detail, .extra-panel { margin-left: var(--space-md); margin-right: var(--space-md); }
+      .panel-toolbar { margin-left: var(--space-md); margin-right: var(--space-md); }
     }
   </style>
 </head>
@@ -144,7 +202,7 @@
     <header class="top">
       <div class="identity">
         <p class="eyebrow"><span class="entity-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span id="entity-label"></span></p>
-        <h1 id="entity-name"></h1>
+        <div class="entity-name-row"><h1 id="entity-name"></h1><img id="food-title-image" class="food-title-image" alt="" hidden></div>
         <div id="badges" class="badges"></div>
       </div>
       <div class="kpis" aria-label="Indicadores nutricionales">
@@ -152,6 +210,10 @@
         <div id="macro-list" class="macro-list"></div>
       </div>
     </header>
+    <div id="panel-toolbar" class="panel-toolbar" hidden>
+      <div id="panel-controls" class="panel-controls" aria-label="Secciones de la minuta"></div>
+      <a id="detail-link" class="detail-link" href="#" aria-label="Ver en My Scoope" hidden><span>Ver en My Scoope</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+    </div>
     <section id="detail" class="detail" aria-label="Detalle de la minuta" hidden>
       <div class="detail-toolbar">
       <div class="detail-tabs detail-tabs--desktop" role="tablist" aria-label="Detalle de la minuta en escritorio">
@@ -165,7 +227,6 @@
         <button id="dist-tab" type="button" role="tab" data-detail-mode="dist" aria-selected="false" aria-controls="dist-panel" tabindex="-1">Dist</button>
         <button id="alloc-tab" type="button" role="tab" data-detail-mode="alloc" aria-selected="false" aria-controls="alloc-panel" tabindex="-1">Alloc</button>
       </div>
-      <a id="detail-link" class="detail-link" href="#" aria-label="Ver minuta en My Scoope" hidden><span>Ver minuta en My Scoope</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
       </div>
       <div id="detail-panel" class="detail-panel" role="tabpanel" aria-label="Menú">
         <div class="menu-header"><span>Comidas</span><span>Alimentos</span></div>
@@ -192,6 +253,18 @@
         <div class="mobile-grid mobile-grid--alloc"><div class="mobile-grid-header"><span>Comidas</span><span>P%</span><span>C%</span><span>G%</span></div><div id="alloc-rows"></div></div>
       </div>
     </section>
+    <section id="foods-panel" class="extra-panel" aria-label="Alimentos agregados de la minuta" hidden>
+      <div class="food-panel-toolbar"><div class="detail-tabs food-panel-desktop" role="tablist" aria-label="Tabla de alimentos"><button type="button" role="tab" aria-selected="true">Tabla Alimentos</button></div><div class="detail-tabs food-panel-mobile" role="tablist" aria-label="Detalle de alimentos">
+        <button id="food-tab-foods" type="button" role="tab" data-food-mode="foods" aria-controls="food-panel-foods" aria-selected="true">Tabla Alimentos</button>
+        <button id="food-tab-calories" type="button" role="tab" data-food-mode="calories" aria-controls="food-panel-calories" aria-selected="false" tabindex="-1">Calorías</button>
+        <button id="food-tab-macros" type="button" role="tab" data-food-mode="macros" aria-controls="food-panel-macros" aria-selected="false" tabindex="-1">Macros</button>
+        <button id="food-tab-dist" type="button" role="tab" data-food-mode="dist" aria-controls="food-panel-dist" aria-selected="false" tabindex="-1">Dist</button>
+        <button id="food-tab-alloc" type="button" role="tab" data-food-mode="alloc" aria-controls="food-panel-alloc" aria-selected="false" tabindex="-1">Alloc</button>
+      </div></div>
+      <div class="food-panel-scroll food-panel-desktop" role="region" aria-label="Tabla de alimentos; desplazar horizontalmente para ver todas las columnas" tabindex="0"><table class="food-panel-table"><thead><tr><th>Alimentos</th><th>Qty</th><th>Cal</th><th>% Cal</th><th>P</th><th>C</th><th>G</th><th>P|C|G%</th><th>P%</th><th>C%</th><th>G%</th></tr></thead><tbody id="aggregate-food-rows"></tbody></table></div>
+      <div id="aggregate-food-mobile" class="food-panel-mobile"></div>
+    </section>
+    <section id="supplements-panel" class="extra-panel" aria-label="Suplementos de la minuta" hidden><h2>Suplementos</h2><div id="supplement-rows"></div></section>
   </article>
   <script>
     (() => {
@@ -207,6 +280,21 @@
         window.openai.openExternal({href: detailLink.href, redirectUrl: false});
       });
       const node = (tag, className, text) => { const element = document.createElement(tag); if (className) element.className = className; if (text !== undefined) element.textContent = String(text); return element; };
+      const imageOrigin = "__MYSCOOPE_IMAGE_ORIGIN__";
+      const imagePathPattern = /^\/api\/v1\/foods\/visual-assets\/[0-9a-f-]{36}\/[0-9a-f]{64}\.png$/;
+      const imageUrl = path => imagePathPattern.test(path) && /^https?:\/\/[^/]+$/.test(imageOrigin) ? imageOrigin + path.replace(/\.png$/, "/wide-v1.png") : null;
+      function setImage(image, path, name) {
+        image.onload = null;
+        image.onerror = null;
+        image.hidden = true;
+        image.removeAttribute("src");
+        const url = imageUrl(path);
+        if (!url) return;
+        image.alt = `Imagen de ${name}`;
+        image.onload = () => { image.hidden = false; };
+        image.onerror = () => { image.hidden = true; };
+        image.src = url;
+      }
       let bridgeReady = false;
       let queuedResult;
       const theme = value => { if (value === "light" || value === "dark") document.documentElement.dataset.theme = value; };
@@ -246,7 +334,7 @@
           ? (mobileModes.includes(mode) ? mode : "calories")
           : (mode === "menu" ? "menu" : "nutrition");
         detailMode = selected;
-        for (const tab of document.querySelectorAll(".detail-tabs [role=tab]")) {
+        for (const tab of byId("detail").querySelectorAll(".detail-tabs [role=tab]")) {
           const target = tab.closest(".detail-tabs--mobile")
             ? (selected === "nutrition" ? "calories" : selected)
             : (selected === "menu" ? "menu" : "nutrition");
@@ -260,7 +348,7 @@
         notifySize();
       }
       mobileQuery.addEventListener("change", () => setDetailMode(detailMode));
-      for (const list of document.querySelectorAll(".detail-tabs")) {
+      for (const list of byId("detail").querySelectorAll(".detail-tabs")) {
         const tabs = [...list.querySelectorAll("[role=tab]")];
         tabs.forEach((tab, index) => {
           tab.addEventListener("click", () => setDetailMode(tab.dataset.detailMode));
@@ -274,9 +362,8 @@
           });
         });
       }
-      const makeMealIdentity = name => {
-        const identity = node("span", "mobile-meal-identity");
-        const icon = node("span", "mobile-meal-icon");
+      const makeEntityIcon = (kind, className) => {
+        const icon = node("span", className);
         icon.setAttribute("aria-hidden", "true");
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("viewBox", "0 0 24 24");
@@ -285,12 +372,58 @@
         svg.setAttribute("stroke-width", "2");
         svg.setAttribute("stroke-linecap", "round");
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("d", "M4 2v8a3 3 0 0 0 6 0V2M7 2v20M17 2c-2 3-3 6-3 10h5V2h-2ZM19 12v10");
+        path.setAttribute("d", kind === "meal"
+          ? "M4 2v8a3 3 0 0 0 6 0V2M7 2v20M17 2c-2 3-3 6-3 10h5V2h-2ZM19 12v10"
+          : kind === "supplement"
+            ? "M10 3 3 10a5 5 0 0 0 7 7l7-7a5 5 0 0 0-7-7ZM7 6l7 7"
+            : "M4 17c6-6 9-10 16-11M5 17c-2 2 0 4 2 3l12-11M14 4l6 2-1 6");
         svg.append(path);
         icon.append(svg);
+        return icon;
+      };
+      const makeMealIdentity = (name, className = "mobile-meal-identity") => {
+        const identity = node("span", className);
+        const iconClass = className === "mobile-meal-identity" ? "mobile-meal-icon" : "meal-row-icon";
+        const icon = makeEntityIcon("meal", iconClass);
         identity.append(icon, node("strong", "", name));
         return identity;
       };
+      function selectPanel(panel) {
+        for (const button of byId("panel-controls").querySelectorAll("button[data-panel]")) button.setAttribute("aria-expanded", String(button.dataset.panel === panel));
+        byId("detail").hidden = panel !== "meals";
+        byId("foods-panel").hidden = panel !== "foods";
+        byId("supplements-panel").hidden = panel !== "supplements";
+        notifySize();
+      }
+      byId("panel-controls").addEventListener("click", event => {
+        const button = event.target.closest("button[data-panel]");
+        if (button) selectPanel(button.dataset.panel);
+      });
+      function setFoodMode(mode) {
+        const modes = ["foods", "calories", "macros", "dist", "alloc"];
+        if (!modes.includes(mode)) return;
+        for (const tab of byId("foods-panel").querySelectorAll("[data-food-mode]")) {
+          const selected = tab.dataset.foodMode === mode;
+          tab.setAttribute("aria-selected", String(selected));
+          tab.tabIndex = selected ? 0 : -1;
+        }
+        for (const panel of byId("aggregate-food-mobile").children) panel.hidden = panel.dataset.mode !== mode;
+        notifySize();
+      }
+      byId("foods-panel").addEventListener("click", event => {
+        const tab = event.target.closest("[data-food-mode]");
+        if (tab) setFoodMode(tab.dataset.foodMode);
+      });
+      byId("foods-panel").addEventListener("keydown", event => {
+        const tab = event.target.closest("[data-food-mode]");
+        if (!tab || !["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
+        const tabs = [...byId("foods-panel").querySelectorAll("[data-food-mode]")];
+        const index = tabs.indexOf(tab);
+        const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+        event.preventDefault();
+        setFoodMode(tabs[next].dataset.foodMode);
+        tabs[next].focus();
+      });
       function render(result) {
         const data = result?.ok === true ? result.data : null;
         const food = data?.food;
@@ -313,6 +446,7 @@
         }
         byId("entity-label").textContent = kind === "food" ? "ALIMENTO" : "MINUTA DIARIA";
         byId("entity-name").textContent = entity.name;
+        setImage(byId("food-title-image"), kind === "food" ? entity.image_path : null, entity.name);
         const badges = byId("badges");
         badges.replaceChildren();
         if (kind === "food") {
@@ -320,18 +454,38 @@
           badges.append(node("span", "badge", `Por 100 ${unit}`));
         }
         else {
-          badges.append(node("span", "badge", `${format(entity.meals_count ?? entity.meals?.length)} comidas`));
-          if (number(entity.foods_count) > 0) badges.append(node("span", "badge", `${format(entity.foods_count)} alimentos`));
+          const mealBadge = node("span", "badge badge--meal");
+          mealBadge.setAttribute("aria-label", `${format(entity.meals_count ?? entity.meals?.length)} comidas`);
+          mealBadge.append(makeEntityIcon("meal", "badge-icon"), node("span", "", format(entity.meals_count ?? entity.meals?.length)));
+          badges.append(mealBadge);
+          const foodBadge = node("span", "badge badge--food");
+          foodBadge.setAttribute("aria-label", `${format(entity.foods_count)} alimentos`);
+          foodBadge.append(makeEntityIcon("food", "badge-icon"), node("span", "", format(entity.foods_count)));
+          badges.append(foodBadge);
+          const controls = byId("panel-controls");
+          controls.replaceChildren();
+          for (const [panel, label, icon, target] of [["meals", "Comidas", "meal", "detail"], ["foods", "Alimentos", "food", "foods-panel"]]) {
+            const button = node("button", `panel-toggle panel-toggle--${icon}`);
+            button.type = "button"; button.dataset.panel = panel; button.setAttribute("aria-controls", target);
+            button.append(makeEntityIcon(icon, "panel-icon"), node("span", "", label));
+            controls.append(button);
+          }
+          if (entity.can_use_supplements === true) {
+            const button = node("button", "panel-toggle panel-toggle--supplement");
+            button.type = "button"; button.dataset.panel = "supplements"; button.setAttribute("aria-controls", "supplements-panel");
+            button.append(makeEntityIcon("supplement", "panel-icon"), node("span", "", "Suplementos"));
+            controls.append(button);
+          }
         }
+        byId("panel-toolbar").hidden = kind !== "dailyplan";
         const kpis = kind === "food" ? entity.macros : entity.kpis;
         byId("total-kcal").textContent = format(kpis.total_kcal);
-        byId("total-kcal").dataset.long = String(byId("total-kcal").textContent.length >= 5);
         const macroList = byId("macro-list");
         macroList.replaceChildren();
         for (const [label, key, color] of [["Proteína", "protein", "var(--nutrition-protein)"], ["Carbos", "carbs", "var(--nutrition-carbs)"], ["Grasas", "fat", "var(--nutrition-fat)"]]) {
           const row = node("div", "macro-row");
           row.append(node("span", "macro-name", label), node("span", "macro-grams", `${format(kpis[key])}g`));
-          if (key === "protein" && kind === "dailyplan" && Number.isFinite(Number(kpis.ppk))) row.append(node("span", "macro-ppk", `${format(kpis.ppk, 1)}g/kg`));
+          if (key === "protein" && kind === "dailyplan" && Number.isFinite(Number(kpis.ppk))) row.append(node("span", "macro-ppk", `${format(kpis.ppk, 1)}/kg`));
           const allocation = percent(kpis[`alloc_${key}`]);
           const bar = node("div", "alloc-bar");
           bar.setAttribute("role", "img");
@@ -366,9 +520,14 @@
             const mealName = meal.meal_name || "Comida";
             const mealKpis = meal.kpis && typeof meal.kpis === "object" ? meal.kpis : {};
             const foods = Array.isArray(meal.foods) ? meal.foods : [];
-            const foodsText = foods.map(item => item.food_name).filter(Boolean).join(", ") || "Sin alimentos";
+            const foodsText = foods.map(item => {
+              if (typeof item.food_name !== "string" || !item.food_name.trim()) return null;
+              const quantity = Number(item.quantity);
+              const unit = item.quantity_unit === "ml" ? "ml" : "g";
+              return Number.isFinite(quantity) && quantity > 0 ? `${item.food_name} (${format(quantity, 1)}${unit})` : item.food_name;
+            }).filter(Boolean).join(", ") || "Sin alimentos";
             const identity = node("div", "meal-identity");
-            identity.append(node("strong", "meal-name", mealName), node("span", "meal-time", meal.hour || "—"));
+            identity.append(makeEntityIcon("meal", "meal-row-icon"), node("strong", "meal-name", mealName), node("span", "meal-time", meal.hour || "—"));
             const menuRow = node("div", "detail-row");
             menuRow.append(identity, node("span", "meal-foods", foodsText));
             menuRows.append(menuRow);
@@ -376,7 +535,9 @@
             const calorieShare = number(kpis.total_kcal) > 0 ? percent(number(mealKpis.total_kcal) / number(kpis.total_kcal) * 100) : 0;
             const shares = Object.fromEntries(["protein", "carbs", "fat"].map(key => [key, number(kpis[key]) > 0 ? percent(number(mealKpis[key]) / number(kpis[key]) * 100) : 0]));
             const nutritionRow = node("tr");
-            nutritionRow.append(node("td", "", mealName), node("td", "", format(mealKpis.total_kcal)));
+            const mealCell = node("td");
+            mealCell.append(makeMealIdentity(mealName, "nutrition-meal-identity"));
+            nutritionRow.append(mealCell, node("td", "", format(mealKpis.total_kcal)));
             const calorieCell = node("td");
             calorieCell.append(makeBar(calorieShare, "var(--nutrition-kcal-border)"));
             nutritionRow.append(calorieCell);
@@ -410,6 +571,98 @@
             mobileRows.alloc.append(allocRow);
           }
           setDetailMode("menu");
+          const aggregates = Array.isArray(entity.foods_aggregation) ? entity.foods_aggregation : [];
+          const foodRows = byId("aggregate-food-rows");
+          const mobileFoodRows = byId("aggregate-food-mobile");
+          foodRows.replaceChildren();
+          mobileFoodRows.replaceChildren();
+          const rows = aggregates.length ? aggregates : meals.flatMap(meal => Array.isArray(meal.foods) ? meal.foods : []);
+          const imagePaths = new Map(meals.flatMap(meal => Array.isArray(meal.foods) ? meal.foods : []).filter(food => Number.isSafeInteger(Number(food.food_id)) && imageUrl(food.image_path)).map(food => [Number(food.food_id), food.image_path]));
+          const available = value => value !== null && value !== undefined && value !== "" && Number.isFinite(Number(value));
+          const ratio = (part, total) => available(part) && available(total) && Number(total) > 0 ? percent(Number(part) / Number(total) * 100) : null;
+          const metric = (item, key) => available(item[key]) ? format(item[key], 1) : "—";
+          const energy = (item, key) => available(item[`kcal_${key}`]) ? Number(item[`kcal_${key}`]) : available(item[key]) ? Number(item[key]) * (key === "fat" ? 9 : 4) : null;
+          const planEnergy = key => available(kpis[`kcal_${key}`]) ? Number(kpis[`kcal_${key}`]) : energy(kpis, key);
+          const bar = (value, color) => value === null ? node("span", "missing-metric", "—") : makeBar(value, color);
+          const makeFoodName = item => {
+            const name = node("span", "extra-food-name");
+            const image = node("img", "extra-food-image");
+            setImage(image, imageUrl(item.image_path) ? item.image_path : imagePaths.get(Number(item.food_id)), item.food_name || "Alimento");
+            name.append(image, node("span", "", item.food_name || "Alimento"));
+            return name;
+          };
+          const modes = [
+            ["foods", ["Alimentos", "Qty"]],
+            ["calories", ["Alimentos", "Cal", "% Cal"]],
+            ["macros", ["Alimentos", "P", "C", "G"]],
+            ["dist", ["Alimentos", "P%", "C%", "G%", "P|C|G"]],
+            ["alloc", ["Alimentos", "P%", "C%", "G%"]],
+          ];
+          const mobileBodies = {};
+          for (const [mode, headers] of modes) {
+            const panel = node("div", "food-panel-mobile");
+            panel.id = `food-panel-${mode}`;
+            panel.dataset.mode = mode;
+            panel.setAttribute("role", "tabpanel");
+            panel.setAttribute("aria-labelledby", `food-tab-${mode}`);
+            panel.hidden = mode !== "foods";
+            const header = node("div", "mobile-grid-header");
+            for (const label of headers) header.append(node("span", "", label));
+            const body = node("div");
+            panel.append(header, body);
+            mobileFoodRows.append(panel);
+            mobileBodies[mode] = body;
+          }
+          if (!rows.length) {
+            const emptyRow = node("tr");
+            const cell = node("td", "empty", "Esta minuta no tiene alimentos.");
+            cell.colSpan = 11;
+            emptyRow.append(cell);
+            foodRows.append(emptyRow);
+            for (const body of Object.values(mobileBodies)) body.append(node("p", "empty", "Esta minuta no tiene alimentos."));
+          }
+          for (const item of rows) {
+            const row = node("tr");
+            const quantity = Number(item.quantity);
+            const unit = item.quantity_unit === "ml" ? "ml" : "g";
+            const qty = Number.isFinite(quantity) && quantity > 0 ? `${format(quantity, 1)} ${unit}` : "—";
+            const kcalShare = ratio(item.total_kcal, kpis.total_kcal);
+            const distribution = Object.fromEntries(["protein", "carbs", "fat"].map(key => [key, ratio(energy(item, key), item.total_kcal)]));
+            const allocation = Object.fromEntries(["protein", "carbs", "fat"].map(key => [key, ratio(energy(item, key), planEnergy(key))]));
+            const distributionBar = () => Object.values(distribution).every(value => value !== null) ? makeDistribution({alloc_protein: distribution.protein, alloc_carbs: distribution.carbs, alloc_fat: distribution.fat}) : node("span", "missing-metric", "—");
+            const cell = content => { const td = node("td"); td.append(content); return td; };
+            row.append(cell(makeFoodName(item)), cell(node("span", "", qty)), cell(node("span", "", metric(item, "total_kcal"))), cell(bar(kcalShare, "var(--nutrition-kcal-border)")));
+            for (const key of ["protein", "carbs", "fat"]) row.append(cell(node("span", "", metric(item, key))));
+            row.append(cell(distributionBar()));
+            for (const [key, color] of [["protein", "var(--nutrition-protein)"], ["carbs", "var(--nutrition-carbs)"], ["fat", "var(--nutrition-fat)"]]) row.append(cell(bar(allocation[key], color)));
+            foodRows.append(row);
+            const mobileContent = {
+              foods: [node("span", "", qty)],
+              calories: [node("span", "", metric(item, "total_kcal")), bar(kcalShare, "var(--nutrition-kcal-border)")],
+              macros: ["protein", "carbs", "fat"].map(key => node("span", "", metric(item, key))),
+              dist: ["protein", "carbs", "fat"].map(key => node("span", "", distribution[key] === null ? "—" : `${format(distribution[key])}%`)).concat(distributionBar()),
+              alloc: [["protein", "var(--nutrition-protein)"], ["carbs", "var(--nutrition-carbs)"], ["fat", "var(--nutrition-fat)"]].map(([key, color]) => bar(allocation[key], color)),
+            };
+            for (const [mode, values] of Object.entries(mobileContent)) {
+              const mobileRow = node("div", "mobile-grid-row");
+              mobileRow.append(makeFoodName(item), ...values);
+              mobileBodies[mode].append(mobileRow);
+            }
+          }
+          const supplementRows = byId("supplement-rows");
+          supplementRows.replaceChildren();
+          const intakes = Array.isArray(entity.supplement_intakes) ? entity.supplement_intakes : [];
+          if (!intakes.length) supplementRows.append(node("p", "empty", "Esta minuta no tiene suplementos."));
+          for (const intake of intakes) for (const item of Array.isArray(intake.supplements) ? intake.supplements : []) {
+            const row = node("div", "extra-row");
+            row.append(node("span", "", item.name || "Suplemento"), node("span", "", `${item.quantity || "—"} ${item.unit || ""}${intake.hour ? ` · ${intake.hour}` : ""}`));
+            supplementRows.append(row);
+          }
+          setFoodMode("foods");
+          selectPanel("meals");
+        } else {
+          byId("foods-panel").hidden = true;
+          byId("supplements-panel").hidden = true;
         }
         byId("status").hidden = true;
         byId("card").hidden = false;

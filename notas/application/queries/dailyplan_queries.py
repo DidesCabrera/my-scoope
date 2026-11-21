@@ -5,6 +5,7 @@ from notas.application.dto.dailyplan_dto import (
     DailyPlanListItemDTO,
     DailyPlanMealDTO,
 )
+from notas.application.queries.food_visual_queries import published_food_visual_paths
 from notas.application.queries.meal_queries import (
     build_meal_food_dto,
     build_meal_kpi_dto,
@@ -47,7 +48,7 @@ def build_dailyplan_kpi_dto(dailyplan: DailyPlan, user) -> DailyPlanKpiDTO:
     )
 
 
-def build_dailyplan_meal_dto(dailyplan_meal, user) -> DailyPlanMealDTO:
+def build_dailyplan_meal_dto(dailyplan_meal, user, *, image_paths=None) -> DailyPlanMealDTO:
     meal = dailyplan_meal.meal
 
     meal_foods = (
@@ -59,7 +60,7 @@ def build_dailyplan_meal_dto(dailyplan_meal, user) -> DailyPlanMealDTO:
 
     body_weight = get_current_weight(user)
     foods = [
-        build_meal_food_dto(meal_food, body_weight=body_weight)
+        build_meal_food_dto(meal_food, body_weight=body_weight, image_path=(image_paths or {}).get(meal_food.food_id))
         for meal_food in meal_foods
     ]
 
@@ -78,6 +79,8 @@ def build_dailyplan_meal_dto(dailyplan_meal, user) -> DailyPlanMealDTO:
 
 def build_dailyplan_foods_aggregation_dto(
     dailyplan_meals,
+    *,
+    image_paths=None,
 ) -> list[DailyPlanFoodAggregationDTO]:
     aggregation = {}
 
@@ -100,6 +103,7 @@ def build_dailyplan_foods_aggregation_dto(
                     "food_id": food.id,
                     "food_name": resolve_food_display_name(food),
                     "quantity": 0.0,
+                    "quantity_unit": food.portion_unit,
                     "protein": 0.0,
                     "carbs": 0.0,
                     "fat": 0.0,
@@ -124,10 +128,12 @@ def build_dailyplan_foods_aggregation_dto(
                 food_id=item["food_id"],
                 food_name=item["food_name"],
                 quantity=item["quantity"],
+                quantity_unit=item["quantity_unit"],
                 protein=item["protein"],
                 carbs=item["carbs"],
                 fat=item["fat"],
                 total_kcal=total_kcal,
+                image_path=(image_paths or {}).get(item["food_id"]),
             )
         )
 
@@ -179,13 +185,21 @@ def build_dailyplan_dto(
         .order_by("order", "id")
     )
 
+    foods = [
+        meal_food.food
+        for dailyplan_meal in dailyplan_meals
+        for meal_food in dailyplan_meal.meal.meal_food_set.all()
+    ]
+    image_paths = published_food_visual_paths(foods)
+
     meals = [
-        build_dailyplan_meal_dto(dailyplan_meal, user)
+        build_dailyplan_meal_dto(dailyplan_meal, user, image_paths=image_paths)
         for dailyplan_meal in dailyplan_meals
     ]
 
     foods_aggregation = build_dailyplan_foods_aggregation_dto(
         dailyplan_meals,
+        image_paths=image_paths,
     )
 
     return DailyPlanDTO(

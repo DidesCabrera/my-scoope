@@ -17,7 +17,9 @@ alimento. En escritorio muestra una tabla con aportes calóricos, distribución 
 porcentajes de cada macro; en móvil muestra «Alimentos», «Calorías», «Macros»,
 «Dist» y «Alloc» en paneles de columnas y barras como en la web. El contrato
 por alimento incluye unidad g/ml, icono y PpK calculado con la misma regla de
-peso del producto.
+peso del producto. Si un alimento global tiene una imagen pública aprobada, el
+DTO incluye su ruta versionada y la card muestra su variante horizontal transparente junto al nombre; si falta o
+no carga, conserva el icono anterior.
 Las barras se calculan a partir de los valores numéricos del DTO. La card no replica las acciones de edición de la web.
 
 ```text
@@ -36,8 +38,10 @@ ChatGPT / cliente MCP Apps
 Assistant y proyectados por MCP. La búsqueda está limitada a diez resultados y
 no monta UI; la lectura de detalle sí monta la card. La autorización, visibilidad
 de Meals propias o públicas no draft, y
-cálculo nutricional permanecen en Django. El iframe no recibe tokens, no hace
-peticiones de red y no puede modificar la comida. La card usa `textContent` para
+cálculo nutricional permanecen en Django. El iframe no recibe tokens ni puede
+modificar la comida. Solo carga imágenes públicas del origen de My Scoope,
+declarado en `openai/widgetCSP.resource_domains`; no consulta APIs desde el
+iframe. La card usa `textContent` para
 mostrar nombres, evita interpretar HTML de datos y muestra un estado neutro ante
 un resultado fallido.
 
@@ -58,7 +62,7 @@ horizontal para las columnas de alimentos. La versión 6 mantiene la tabla en
 anchos intermedios, incluido 570 px, y activa los cinco paneles móviles hasta
 480 px; cada vista nutricional móvil usa una cuadrícula propia.
 La versión 7 conserva el tamaño al 100 % en el ancho de teléfono (hasta 480 px) y aplica el 80 % en anchos mayores, incluido el panel estrecho de escritorio.
-La versión 8 mantiene intacto ese diseño y agrega «Abrir en My Scoope» solo para comidas propias. Usa el ID validado del resultado autorizado y el origen HTTPS configurado, sin tokens ni datos nutricionales en la URL. `window.openai.openExternal({href, redirectUrl: false})` abre `/libraries/meals/<id>` desde ChatGPT; fuera de ese host funciona el enlace normal. iOS y Android asocian esa ruta a la ficha nativa. Si la app no está instalada, el servidor redirige a `/app/meals/<id>/`, donde se exige sesión y se vuelve a comprobar acceso. Las comidas públicas de terceros siguen visibles en la card, pero no ofrecen el botón porque el detalle nativo de biblioteca solo admite comidas propias. Las versiones 2 a 7 siguen disponibles para conversaciones anteriores. El destino abre el ambiente configurado en la instalación móvil; staging requiere una instalación móvil configurada para staging.
+La versión 8 mantiene intacto ese diseño y agrega «Ver en My Scoope» solo para comidas propias; en móvil muestra únicamente el chevrón con ese nombre accesible. Usa el ID validado del resultado autorizado y el origen HTTPS configurado, sin tokens ni datos nutricionales en la URL. `window.openai.openExternal({href, redirectUrl: false})` abre `/libraries/meals/<id>` desde ChatGPT; fuera de ese host funciona el enlace normal. iOS y Android asocian esa ruta a la ficha nativa. Si la app no está instalada, el servidor redirige a `/app/meals/<id>/`, donde se exige sesión y se vuelve a comprobar acceso. Las comidas públicas de terceros siguen visibles en la card, pero no ofrecen el botón porque el detalle nativo de biblioteca solo admite comidas propias. Las versiones 2 a 7 siguen disponibles para conversaciones anteriores. El destino abre el ambiente configurado en la instalación móvil; staging requiere una instalación móvil configurada para staging.
 
 La sección «En conversación» de la galería web (`/app/dev/ui-system/`, solo en
 DEBUG) sirve `meal_card_v8.html` en un iframe aislado, con el origen de la propia

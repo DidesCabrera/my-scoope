@@ -342,6 +342,8 @@ class AIToolsAPIReadEndpointTests(TestCase):
             data["data"]["dailyplan"]["name"],
             "Training Day",
         )
+        self.assertEqual(data["data"]["dailyplan"]["foods_aggregation"][0]["quantity_unit"], "g")
+        self.assertNotIn("can_use_supplements", data["data"]["dailyplan"])
 
     def test_read_proposal_endpoint_returns_proposal(self):
         self.client.force_login(self.user)

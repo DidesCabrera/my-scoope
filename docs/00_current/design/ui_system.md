@@ -79,6 +79,10 @@ Los nuevos estilos deben usar tokens semánticos derivados de
 `design/ui-contract.json`. Django carga primero la compatibilidad histórica de
 `notas/static/notas/css/tokens.css` y después la salida autoritativa
 `notas/static/notas/css/ui-contract.generated.css`.
+La web oscura usa el violeta de minuta diaria `#7C4DDB` de móvil mediante
+`platforms.web.themes.dark.entities.dailyPlan`; el tema claro conserva su color.
+Dash KPI usa en oscuro el borde de calorías, texto de la etiqueta y separadores
+alineados con los tokens de móvil.
 
 No editar la salida generada. Ejecutar `npm run generate:ui` para actualizar CSS,
 TypeScript y el HTML MCP autónomo, y `npm run check:ui` para comprobar que el repositorio está

@@ -377,12 +377,14 @@ class ReadContractTests(TestCase):
                 "food_id",
                 "food_name",
                 "quantity",
+                "quantity_unit",
                 "protein",
                 "carbs",
                 "fat",
                 "total_kcal",
             },
         )
+        self.assertEqual(data["foods_aggregation"][0]["quantity_unit"], "g")
 
         assert_json_serializable(self, data)
 

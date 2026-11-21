@@ -7,13 +7,14 @@ from mcp.server.auth.provider import AccessToken
 from myscoope_mcp.auth import StaticMCPTokenVerifier, create_external_mcp_auth_settings
 from myscoope_mcp.contracts import MCPToolCallResult
 from myscoope_mcp.protocol_server import (
+    FOOD_CARD_RESOURCE_URI,
     LEGACY_MEAL_CARD_RESOURCE_URI,
-    OLDER_MEAL_CARD_RESOURCE_URI,
-    OLDEST_MEAL_CARD_RESOURCE_URI,
     MEAL_CARD_MIME_TYPE,
     MEAL_CARD_RESOURCE_URI,
-    RECENT_MEAL_CARD_RESOURCE_URI,
+    OLDER_MEAL_CARD_RESOURCE_URI,
+    OLDEST_MEAL_CARD_RESOURCE_URI,
     PREVIOUS_MEAL_CARD_RESOURCE_URI,
+    RECENT_MEAL_CARD_RESOURCE_URI,
     V5_MEAL_CARD_RESOURCE_URI,
     create_mcp_server,
 )
@@ -51,6 +52,8 @@ class MCPMealCardUITests(unittest.TestCase):
         self.assertEqual(resources[MEAL_CARD_RESOURCE_URI].mimeType, MEAL_CARD_MIME_TYPE)
         self.assertIn(RECENT_MEAL_CARD_RESOURCE_URI, resources)
         self.assertEqual(resources[MEAL_CARD_RESOURCE_URI].meta["openai/widgetCSP"]["redirect_domains"], ["http://127.0.0.1:8000"])
+        self.assertEqual(resources[MEAL_CARD_RESOURCE_URI].meta["openai/widgetCSP"]["resource_domains"], ["http://127.0.0.1:8000"])
+        self.assertEqual(content.meta["openai/widgetCSP"]["resource_domains"], ["http://127.0.0.1:8000"])
         self.assertIn(PREVIOUS_MEAL_CARD_RESOURCE_URI, resources)
         self.assertIn(V5_MEAL_CARD_RESOURCE_URI, resources)
         self.assertIn(LEGACY_MEAL_CARD_RESOURCE_URI, resources)
@@ -72,6 +75,21 @@ class MCPMealCardUITests(unittest.TestCase):
         self.assertIn('id="meal-allocation"', content.content)
         self.assertIn('id="meal-app-link"', content.content)
         self.assertIn('"http://127.0.0.1:8000"', content.content)
+        self.assertIn("imagePathPattern", content.content)
+
+    def test_food_card_allows_only_its_own_public_image_origin(self):
+        async def inspect():
+            server = create_mcp_server()
+            resources = {str(resource.uri): resource for resource in await server.list_resources()}
+            content = (await server.read_resource(FOOD_CARD_RESOURCE_URI))[0]
+            return resources[FOOD_CARD_RESOURCE_URI], content
+
+        resource, content = asyncio.run(inspect())
+        self.assertEqual(resource.meta["openai/widgetCSP"]["resource_domains"], ["http://127.0.0.1:8000"])
+        self.assertEqual(content.meta["openai/widgetCSP"]["resource_domains"], ["http://127.0.0.1:8000"])
+        self.assertIn('id="food-title-image"', content.content)
+        self.assertIn('"http://127.0.0.1:8000"', content.content)
+        self.assertNotIn("__MYSCOOPE_IMAGE_ORIGIN__", content.content)
 
     def test_meal_link_uses_configured_public_origin(self):
         async def inspect():

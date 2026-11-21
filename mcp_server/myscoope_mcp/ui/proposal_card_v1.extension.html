@@ -1,0 +1,60 @@
+<template id="proposal-shell-template">
+  <section id="proposal-shell" class="proposal-shell" hidden aria-labelledby="proposal-title">
+    <header class="proposal-shell__header">
+      <div>
+        <p id="proposal-reference" class="proposal-shell__eyebrow"></p>
+        <h2 id="proposal-title" class="proposal-shell__title"></h2>
+      </div>
+      <span id="proposal-status" class="proposal-shell__status"></span>
+    </header>
+    <p id="proposal-summary" class="proposal-shell__summary"></p>
+    <div id="proposal-plan-slot" class="proposal-shell__plan"></div>
+    <footer class="proposal-shell__footer">
+      <p class="proposal-shell__note">Aún no se aplicaron cambios.</p>
+      <a id="proposal-link" class="proposal-shell__link" href="#" aria-label="Ver en My Scoope" hidden><span>Ver en My Scoope</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></a>
+    </footer>
+  </section>
+</template>
+<script>
+  (() => {
+    const template = document.getElementById("proposal-shell-template");
+    const shell = template.content.firstElementChild.cloneNode(true);
+    const card = document.getElementById("card");
+    shell.querySelector("#proposal-plan-slot").append(card);
+    document.body.insertBefore(shell, document.getElementById("status").nextSibling);
+    const link = shell.querySelector("#proposal-link");
+    card.querySelector("#panel-toolbar").append(link);
+    const appBaseUrl = "__MYSCOOPE_APP_BASE_URL__";
+    link.addEventListener("click", event => {
+      if (typeof window.openai?.openExternal !== "function") return;
+      event.preventDefault();
+      window.openai.openExternal({href: link.href, redirectUrl: false});
+    });
+    function renderProposal(result) {
+      const proposal = result?.ok === true ? result.data?.proposal_card : null;
+      const plan = result?.ok === true ? result.data?.dailyplan : null;
+      if (!proposal || !plan || !Number.isSafeInteger(proposal.id) || proposal.id < 1) {
+        shell.hidden = true;
+        return;
+      }
+      shell.querySelector("#proposal-reference").textContent = `PROPUESTA · #${proposal.id}`;
+      shell.querySelector("#proposal-title").textContent = proposal.title || "Minuta diaria para revisión";
+      shell.querySelector("#proposal-status").textContent = proposal.status_label || "Pendiente de revisión";
+      shell.querySelector("#proposal-summary").textContent = proposal.summary || "";
+      if (/^https?:\/\/[^/]+\/app$/.test(appBaseUrl)) {
+        link.href = `${appBaseUrl}/proposals/${proposal.id}/`;
+        link.hidden = false;
+      } else {
+        link.hidden = true;
+      }
+      // The proposed plan has no final DailyPlan URL.
+      document.getElementById("detail-link").hidden = true;
+      shell.hidden = false;
+    }
+    window.addEventListener("message", event => {
+      if (event.source !== window.parent || event.data?.method !== "ui/notifications/tool-result") return;
+      renderProposal(event.data.params?.structuredContent);
+    });
+    if (window.openai?.toolOutput) renderProposal(window.openai.toolOutput);
+  })();
+</script>

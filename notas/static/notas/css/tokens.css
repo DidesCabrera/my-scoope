@@ -239,7 +239,7 @@ html[data-theme="dark"] {
 
    /* Internal separators */
    --panel-row-separator: #35353585;
-   --kpi-row-separator: #2f2f2f85;
+   --kpi-row-separator: #2a2a2a;
 
    /* Panel tabs */
    --panel-tab-bg: var(--surface-card-muted);
@@ -280,7 +280,7 @@ html[data-theme="dark"] {
 
    /* KPI total */
    --kpi-total-bg: #26211d;
-   --kpi-total-border: #5a4031;
+   --kpi-total-border: var(--nutrition-kcal-border);
    --kpi-total-text: #f5f5f5;
 
    /* Breadcrumbs */

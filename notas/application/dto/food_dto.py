@@ -40,8 +40,11 @@ class FoodDTO:
     created_by_id: int | None
     macros: FoodMacroDTO
     portion_unit: str = "g"
+    image_path: str | None = None
 
     def as_dict(self) -> dict:
         data = asdict(self)
         data["macros"] = self.macros.as_dict()
+        if data["image_path"] is None:
+            del data["image_path"]
         return data

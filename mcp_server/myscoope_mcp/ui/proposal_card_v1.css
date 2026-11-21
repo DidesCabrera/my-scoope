@@ -1,0 +1,87 @@
+/* The DailyPlan inside this shell is the unchanged entity_card_v2 renderer. */
+body { padding: 0 0 4px; }
+.proposal-shell {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+}
+.proposal-shell__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding: var(--space-lg) var(--space-xl) var(--space-md);
+}
+.proposal-shell__eyebrow {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.proposal-shell__title {
+  margin: var(--space-sm) 0 0;
+  font-size: var(--font-size-section);
+  line-height: 1.25;
+}
+.proposal-shell__status {
+  padding: 5px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  color: var(--text-main);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-semibold);
+}
+.proposal-shell__summary {
+  margin: 0 var(--space-xl) var(--space-lg);
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  line-height: 1.45;
+}
+.proposal-shell__plan {
+  padding: 0 var(--space-md);
+}
+.proposal-shell__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  padding: var(--space-lg) var(--space-xl);
+}
+.proposal-shell__note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+}
+.proposal-shell__link {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--text-main);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+}
+.proposal-shell__link svg { width: 17px; height: 17px; flex: none; }
+.proposal-shell__link:focus-visible,
+.proposal-shell__link:hover {
+  border-color: var(--text-main);
+}
+@media (max-width: 600px) {
+  .proposal-shell__link { width: 34px; padding: 5px; justify-content: center; }
+  .proposal-shell__link span { display: none; }
+  .proposal-shell__header { padding: var(--space-md); }
+  .proposal-shell__summary { margin: 0 var(--space-md) var(--space-md); }
+  .proposal-shell__plan { padding: 0 var(--space-sm); }
+  .proposal-shell__footer { padding: var(--space-md); }
+}

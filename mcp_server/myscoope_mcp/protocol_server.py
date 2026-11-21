@@ -21,6 +21,7 @@ from myscoope_mcp.client import MyscoopeAPIClient
 from myscoope_mcp.config import load_config_from_env
 from myscoope_mcp.contracts import MCPToolCallResult
 from myscoope_mcp.dispatcher import dispatch_tool_call
+from myscoope_mcp.proposal_card import build_proposal_card_data
 from myscoope_mcp.tools import (
     FORBIDDEN_TOOL_NAMES,
     TOOL_COMPARE_DAILYPLAN_TO_TARGETS,
@@ -42,9 +43,11 @@ from myscoope_mcp.tools import (
 SERVER_NAME = "my-scoope-mcp"
 FOOD_CARD_RESOURCE_URI = "ui://myscoope/food-card-v1.html"
 DAILYPLAN_CARD_RESOURCE_URI = "ui://myscoope/dailyplan-card-v2.html"
+PROPOSAL_CARD_RESOURCE_URI = "ui://myscoope/proposal-card-v1.html"
 PREVIOUS_DAILYPLAN_CARD_RESOURCE_URI = "ui://myscoope/dailyplan-card-v1.html"
 ENTITY_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "entity_card_v1.html"
 DAILYPLAN_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "entity_card_v2.html"
+PROPOSAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "proposal_card_v1.html"
 MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v8.html"
 MEAL_CARD_RESOURCE_PATH = Path(__file__).parent / "ui" / "meal_card_v8.html"
 RECENT_MEAL_CARD_RESOURCE_URI = "ui://myscoope/meal-card-v7.html"
@@ -203,6 +206,17 @@ def summarize_created_proposal_result(result: MCPToolCallResult) -> dict[str, An
         },
         "error": None,
     }
+
+
+def summarize_generated_dailyplan_proposal_result(result: MCPToolCallResult) -> dict[str, Any]:
+    """Show a safe preview while keeping profile and audit snapshots private."""
+    summary = summarize_created_proposal_result(result)
+    if not summary["ok"]:
+        return summary
+    card_data = build_proposal_card_data(result.data.get("proposal"))
+    if card_data:
+        summary["data"].update(card_data)
+    return summary
 
 
 def create_mcp_server(
@@ -483,6 +497,7 @@ def register_mcp_tools(server: FastMCP) -> None:
 
     @server.tool(
         annotations=annotations[TOOL_CREATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL],
+        meta={"ui": {"resourceUri": PROPOSAL_CARD_RESOURCE_URI}},
     )
     def create_nutrition_engine_dailyplan_proposal(
         nutrition_brief: Annotated[dict[str, Any], Field(description=(
@@ -510,7 +525,7 @@ def register_mcp_tools(server: FastMCP) -> None:
             },
         )
 
-        return summarize_created_proposal_result(result)
+        return summarize_generated_dailyplan_proposal_result(result)
 
     @server.tool(
         annotations=annotations[TOOL_ITERATE_NUTRITION_ENGINE_DAILYPLAN_PROPOSAL],
@@ -731,19 +746,41 @@ def register_mcp_resources(server: FastMCP) -> None:
     card_app_base_url = _card_web_app_base_url()
     parsed_app_url = urlsplit(card_app_base_url)
     redirect_origin = f"{parsed_app_url.scheme}://{parsed_app_url.netloc}"
-    @server.resource(FOOD_CARD_RESOURCE_URI, name="My Scoope food card", mime_type=MEAL_CARD_MIME_TYPE)
+    @server.resource(
+        FOOD_CARD_RESOURCE_URI,
+        name="My Scoope food card",
+        mime_type=MEAL_CARD_MIME_TYPE,
+        meta={"openai/widgetCSP": {"resource_domains": [redirect_origin]}},
+    )
     def food_card_resource() -> str:
-        return ENTITY_CARD_RESOURCE_PATH.read_text(encoding="utf-8")
+        return ENTITY_CARD_RESOURCE_PATH.read_text(encoding="utf-8").replace(
+            '"__MYSCOOPE_IMAGE_ORIGIN__"', json.dumps(redirect_origin)
+        )
 
     @server.resource(
         DAILYPLAN_CARD_RESOURCE_URI,
         name="My Scoope daily plan card",
         mime_type=MEAL_CARD_MIME_TYPE,
-        meta={"openai/widgetCSP": {"redirect_domains": [redirect_origin]}},
+        meta={"openai/widgetCSP": {"redirect_domains": [redirect_origin], "resource_domains": [redirect_origin]}},
     )
     def dailyplan_card_resource() -> str:
         return DAILYPLAN_CARD_RESOURCE_PATH.read_text(encoding="utf-8").replace(
             '"__MYSCOOPE_APP_BASE_URL__"', json.dumps(card_app_base_url)
+        ).replace(
+            '"__MYSCOOPE_IMAGE_ORIGIN__"', json.dumps(redirect_origin)
+        )
+
+    @server.resource(
+        PROPOSAL_CARD_RESOURCE_URI,
+        name="My Scoope proposal card",
+        mime_type=MEAL_CARD_MIME_TYPE,
+        meta={"openai/widgetCSP": {"redirect_domains": [redirect_origin], "resource_domains": [redirect_origin]}},
+    )
+    def proposal_card_resource() -> str:
+        return PROPOSAL_CARD_RESOURCE_PATH.read_text(encoding="utf-8").replace(
+            '"__MYSCOOPE_APP_BASE_URL__"', json.dumps(card_app_base_url)
+        ).replace(
+            '"__MYSCOOPE_IMAGE_ORIGIN__"', json.dumps(redirect_origin)
         )
 
     @server.resource(PREVIOUS_DAILYPLAN_CARD_RESOURCE_URI, name="My Scoope daily plan card v1", mime_type=MEAL_CARD_MIME_TYPE)
@@ -754,7 +791,7 @@ def register_mcp_resources(server: FastMCP) -> None:
         MEAL_CARD_RESOURCE_URI,
         name="My Scoope meal card",
         mime_type=MEAL_CARD_MIME_TYPE,
-        meta={"openai/widgetCSP": {"redirect_domains": [redirect_origin]}},
+        meta={"openai/widgetCSP": {"redirect_domains": [redirect_origin], "resource_domains": [redirect_origin]}},
     )
     def meal_card_resource() -> str:
         return MEAL_CARD_RESOURCE_PATH.read_text(encoding="utf-8").replace(

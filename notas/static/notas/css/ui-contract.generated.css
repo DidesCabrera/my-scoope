@@ -127,4 +127,6 @@ html[data-theme="dark"] {
   --nutrition-kcal-border: #8d6951;
   --alloc-bar-bg: #313131;
   --alloc-cell-bg: #313131;
+  --entity-dailyplan: #7C4DDB;
+  --color-dailyplan: #7C4DDB;
 }
